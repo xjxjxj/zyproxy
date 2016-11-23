@@ -7,10 +7,10 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>base</artifactId>
+    <artifactId>common</artifactId>
     <packaging>jar</packaging>
 
-    <name>base</name>
+    <name>common</name>
     <url>http://maven.apache.org</url>
 
     <properties>
@@ -19,8 +19,12 @@
 
     <dependencies>
         <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty</artifactId>
+            <groupId>zzy.zyproxy</groupId>
+            <artifactId>base</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.msgpack</groupId>
+            <artifactId>msgpack</artifactId>
         </dependency>
     </dependencies>
 </project>
