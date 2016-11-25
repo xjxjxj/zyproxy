@@ -15,7 +15,7 @@ public class MsgPackDecoder extends OneToOneDecoder {
 
     @Override
     protected Object decode(ChannelHandlerContext ctx, Channel channel, Object msg) throws Exception {
-        System.out.println(msg.getClass());
+        LOGGER.debug("MsgPackDecoder@decode");
         return null;
     }
 }

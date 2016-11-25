@@ -22,6 +22,24 @@ public class HeartMsg implements Packet{
         PONG
     }
 
+    public HeartBody getHeartBody() {
+        return heartBody;
+    }
+
+    public HeartMsg setHeartBody(HeartBody heartBody) {
+        this.heartBody = heartBody;
+        return this;
+    }
+
+    public HeartType getHeartType() {
+        return heartType;
+    }
+
+    public HeartMsg setHeartType(HeartType heartType) {
+        this.heartType = heartType;
+        return this;
+    }
+
     public Boolean assertHeartType(HeartType eqHeartType) {
         if (heartType == null) {
             return null;

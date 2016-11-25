@@ -18,18 +18,25 @@ import java.util.Map;
 public abstract class AcceptServer {
     private final static Logger LOGGER = LoggerFactory.getLogger(AcceptServer.class);
     ServerBootstrap bootstrap;
+    SocketAddress socketAddress;
+
+    public AcceptServer(SocketAddress socketAddress) {
+        this.socketAddress = socketAddress;
+    }
 
     public void start() {
         Channel channel = null;
         try {
-            // Configure the server.
+            // Configure the netsrv.
             bootstrap = new ServerBootstrap();
             bootstrap.setFactory(getChannelFactory());
             bootstrap.setPipelineFactory(getPipelineFactory());
             bootstrap.setOptions(getOptions());
 
             // Bind and start to accept incoming connections.
-            channel = bootstrap.bind(getInetSocketAddress());
+            channel = bootstrap.bind(socketAddress);
+            System.out.println(channel.getClass().getName());
+            LOGGER.info("[{}],bind:{}",getAcceptServerName(), socketAddress);
             channel.getCloseFuture().sync();
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -41,7 +48,7 @@ public abstract class AcceptServer {
         }
     }
 
-    protected abstract SocketAddress getInetSocketAddress();
+    protected abstract String getAcceptServerName();
 
     protected abstract ChannelPipelineFactory getPipelineFactory();
 

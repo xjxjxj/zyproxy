@@ -7,10 +7,10 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>lan-server</artifactId>
+    <artifactId>net-lan</artifactId>
     <packaging>jar</packaging>
 
-    <name>lan-server</name>
+    <name>net-lan</name>
     <url>http://maven.apache.org</url>
 
     <properties>
