@@ -7,7 +7,7 @@
     <version>1.0-SNAPSHOT</version>
     <modules>
         <module>core</module>
-        <module>net-lan</module>
+        <module>net-nat</module>
     </modules>
     <packaging>pom</packaging>
 
@@ -38,7 +38,7 @@
             </dependency>
             <dependency>
                 <groupId>zzy.zyproxy</groupId>
-                <artifactId>net-lan</artifactId>
+                <artifactId>net-nat</artifactId>
                 <version>1.0-SNAPSHOT</version>
             </dependency>
             <!--测试依赖-->
