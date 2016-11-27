@@ -21,12 +21,12 @@ import java.net.SocketAddress;
 public final class AcceptHeartServer extends AcceptServer {
     private final static Logger LOGGER = LoggerFactory.getLogger(AcceptHeartServer.class);
 
-    private BackChannelPool backChannelPool;
+    private ChannelShare channelShare;
     private int allIdleTimeSeconds;
 
-    public AcceptHeartServer(SocketAddress socketAddress, BackChannelPool backChannelPool, int allIdleTimeSeconds) {
+    public AcceptHeartServer(SocketAddress socketAddress, ChannelShare channelShare, int allIdleTimeSeconds) {
         super(socketAddress);
-        this.backChannelPool = backChannelPool;
+        this.channelShare = channelShare;
         this.allIdleTimeSeconds = allIdleTimeSeconds;
     }
 
@@ -46,7 +46,7 @@ public final class AcceptHeartServer extends AcceptServer {
                 HeartMsgCodecFactory.addEncoderAtLast(pipeline);
                 ChannelPiplineUtil.addLast(pipeline,
                         new IdleStateHandler(timer, 10, 10, allIdleTimeSeconds),
-                        new AcceptHeartInboundHandler(backChannelPool)
+                        new AcceptHeartInboundHandler(channelShare)
                 );
 
                 return pipeline;

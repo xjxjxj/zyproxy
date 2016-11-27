@@ -3,7 +3,7 @@ package zzy.zyproxy.netlan.netsrv.handler;
 import org.jboss.netty.channel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import zzy.zyproxy.netlan.netsrv.BackChannelPool;
+import zzy.zyproxy.netlan.netsrv.ChannelShare;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -14,10 +14,10 @@ import java.net.SocketAddress;
  */
 public class AcceptUserInboundHandler extends SimpleChannelUpstreamHandler {
     private final static Logger LOGGER = LoggerFactory.getLogger(AcceptUserInboundHandler.class);
-    private final BackChannelPool backChannelPool;
+    private final ChannelShare channelShare;
 
-    public AcceptUserInboundHandler(BackChannelPool backChannelPool) {
-        this.backChannelPool = backChannelPool;
+    public AcceptUserInboundHandler(ChannelShare channelShare) {
+        this.channelShare = channelShare;
     }
 
     @Override
@@ -28,7 +28,7 @@ public class AcceptUserInboundHandler extends SimpleChannelUpstreamHandler {
         SocketAddress localAddress = inboundChannel.getLocalAddress();
         if (localAddress instanceof InetSocketAddress) {
             InetSocketAddress localAdd = (InetSocketAddress) localAddress;
-            backChannelPool.takeUserToBackChannel(ctx.getChannel(),localAdd);
+            channelShare.takeUserToBackChannel(ctx.getChannel(),localAdd);
         }
     }
 

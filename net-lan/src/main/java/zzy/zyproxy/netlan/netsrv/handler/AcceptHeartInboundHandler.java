@@ -6,7 +6,7 @@ import org.jboss.netty.handler.timeout.IdleStateEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import zzy.zyproxy.core.packet.heart.HeartMsg;
-import zzy.zyproxy.netlan.netsrv.BackChannelPool;
+import zzy.zyproxy.netlan.netsrv.ChannelShare;
 import zzy.zyproxy.netlan.netsrv.channel.NetHeartChannel;
 
 /**
@@ -16,12 +16,11 @@ import zzy.zyproxy.netlan.netsrv.channel.NetHeartChannel;
 public class AcceptHeartInboundHandler extends SimpleChannelUpstreamHandler {
     private final static Logger LOGGER = LoggerFactory.getLogger(AcceptHeartInboundHandler.class);
 
-    private final BackChannelPool backChannelPool;
-    private boolean isFirstPing = true;
-    NetHeartChannel netHeartChannel = new NetHeartChannel(null);
+    private final ChannelShare channelShare;
+    private NetHeartChannel netHeartChannel = new NetHeartChannel(null);
 
-    public AcceptHeartInboundHandler(BackChannelPool backChannelPool) {
-        this.backChannelPool = backChannelPool;
+    public AcceptHeartInboundHandler(ChannelShare channelShare) {
+        this.channelShare = channelShare;
     }
 
     private NetHeartChannel getNetHeartChannel(Channel channel) {
@@ -48,6 +47,14 @@ public class AcceptHeartInboundHandler extends SimpleChannelUpstreamHandler {
         if (msg0.isPing()) {
             msgPing(netHeartChannel, msg0);
         }
+        if (msg0.isLanRegisterHeart()) {
+            msgRegisterLanHeart(netHeartChannel,msg0);
+        }
+    }
+
+    private void msgRegisterLanHeart(NetHeartChannel netHeartChannel, HeartMsg msg0) {
+        HeartMsg.LanRegisterHeart lanRegisterHeart = msg0.asSubLanRegisterHeart();
+        channelShare.putNewHeartChannel(netHeartChannel,lanRegisterHeart.getNetUserProxyPort());
     }
 
     @Override
@@ -59,7 +66,7 @@ public class AcceptHeartInboundHandler extends SimpleChannelUpstreamHandler {
     @Override
     public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
         LOGGER.info("channelClosed@{}", ctx.getChannel());
-        backChannelPool.newCloseBackSrvTask(ctx.getChannel());
+        channelShare.newCloseBackSrvTask(ctx.getChannel());
     }
 
 
@@ -70,19 +77,7 @@ public class AcceptHeartInboundHandler extends SimpleChannelUpstreamHandler {
      * @param heartMsg0       原始信息
      */
     private void msgPing(final NetHeartChannel netHeartChannel, final HeartMsg heartMsg0) {
-        netHeartChannel.writePong().addListener(new ChannelFutureListener() {
-            public void operationComplete(ChannelFuture future) throws Exception {
-                if (future.isSuccess()) {
-                    LOGGER.debug("响应客户端PING信息，发送PONG信息成功@{}", netHeartChannel);
-                    if (isFirstPing) {
-                        backChannelPool.putNewHeartChannel(netHeartChannel);
-                        isFirstPing = false;
-                    }
-                } else {
-                    netHeartChannel.close();
-                }
-            }
-        });
+        netHeartChannel.writePong();
     }
 
     /**

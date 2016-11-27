@@ -1,6 +1,7 @@
 package zzy.zyproxy.netlan.netsrv;
 
 import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.ChannelHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import zzy.zyproxy.netlan.netsrv.channel.NetHeartChannel;
@@ -14,12 +15,12 @@ import java.util.concurrent.*;
  * @author zhouzhongyuan
  * @date 2016/11/25
  */
-public class BackChannelPool {
-    private final static Logger LOGGER = LoggerFactory.getLogger(BackChannelPool.class);
+public class ChannelShare {
+    private final static Logger LOGGER = LoggerFactory.getLogger(ChannelShare.class);
 
-    //############[===============]############//
-    //############[BackChannelPool]############//
-    //############[===============]############//
+    //############[============]############//
+    //############[backChannels]############//
+    //############[============]############//
     private final Queue<Runnable> tasks = new ArrayBlockingQueue<Runnable>(1000);
     private final ExecutorService taskExecutor = Executors.newCachedThreadPool();
     private final ScheduledExecutorService checkBackProxyChannelsExecutor = Executors.newSingleThreadScheduledExecutor();
@@ -44,24 +45,23 @@ public class BackChannelPool {
         }
     }
 
-    //############[================]############//
-    //############[HeartChannelPool]############//
-    //############[================]############//
+    //############[=============]############//
+    //############[HeartChannels]############//
+    //############[=============]############//
     /**
      * 用来注册Tcp的端口 排除80和443
      */
     private volatile ConcurrentHashMap<Integer, NetHeartChannel> portRegister = new ConcurrentHashMap<Integer, NetHeartChannel>();
 
-    public void putNewHeartChannel(NetHeartChannel netHeartChannel) {
-        Integer localAddressPort = netHeartChannel.getLocalAddressPort();
-        if (localAddressPort == null) {
+    public void putNewHeartChannel(NetHeartChannel netHeartChannel, Integer proxyPort) {
+        if (proxyPort == null) {
             throw new RuntimeException("后台连接池获取本地端口错误");
         }
-        NetHeartChannel netHeartChannelReg = portRegister.get(localAddressPort);
+        NetHeartChannel netHeartChannelReg = portRegister.get(proxyPort);
         if (netHeartChannelReg == null || !netHeartChannelReg.isConnected()) {
-            portRegister.put(localAddressPort, netHeartChannel);
+            portRegister.put(proxyPort, netHeartChannel);
         }
-        LOGGER.debug("后台连接池newWatchBackSrvTask");
+        LOGGER.debug("后台Heart连接池putNewHeartChannel,@proxyPort:{}");
     }
 
     private void takeBackChannelFromRemoteAtPort(int localAddPort) {

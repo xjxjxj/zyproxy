@@ -16,7 +16,7 @@ public final class AcceptBackServer extends AcceptServer {
     private final static Logger LOGGER = LoggerFactory.getLogger(AcceptBackServer.class);
     private final static Logger HANDLER_LOGGER = LoggerFactory.getLogger(AcceptBackServerHandler.class);
 
-    public AcceptBackServer(SocketAddress socketAddress, BackChannelPool backChannelPool) {
+    public AcceptBackServer(SocketAddress socketAddress, ChannelShare channelShare) {
         super(socketAddress);
     }
 

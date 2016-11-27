@@ -13,25 +13,32 @@ import zzy.zyproxy.core.util.ChannelPiplineUtil;
 import zzy.zyproxy.netlan.lansrv.handler.LanHeartInboundHandler;
 
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.util.concurrent.Executors;
 
 /**
  * @author zhouzhongyuan
  * @date 2016/11/24
  */
-public final class LanHeartServerClient {
-    private final static Logger LOGGER = LoggerFactory.getLogger(LanHeartServerClient.class);
+public final class LanHeartClient {
+    private final static Logger LOGGER = LoggerFactory.getLogger(LanHeartClient.class);
 
-    private final SocketAddress netHeartAddress;
-    private final InetSocketAddress lanProxyAddr;
     private final int allIdleTimeSeconds;
+    private final InetSocketAddress acptHeartAddr;
+    private final InetSocketAddress acptUserAddr;
 
-    public LanHeartServerClient(SocketAddress netHeartAddress, InetSocketAddress lanProxyAddr, int allIdleTimeSeconds) {
-        this.netHeartAddress = netHeartAddress;
-        this.lanProxyAddr = lanProxyAddr;
+    private BackClientFactory backClientFactory;
+
+    public LanHeartClient(InetSocketAddress acptHeartAddr, InetSocketAddress acptUserAddr,
+                          InetSocketAddress acptBackAddr, InetSocketAddress lanRealAddr,
+                          int allIdleTimeSeconds) {
+        this.acptHeartAddr = acptHeartAddr;
+        this.acptUserAddr = acptUserAddr;
         this.allIdleTimeSeconds = allIdleTimeSeconds;
+
+        RealClientFactory realClientFactory = new RealClientFactory(lanRealAddr);
+        this.backClientFactory = new BackClientFactory(acptBackAddr, realClientFactory);
     }
+
 
     public void start() {
         ClientBootstrap bootstrap = new ClientBootstrap(
@@ -42,7 +49,7 @@ public final class LanHeartServerClient {
         try {
             bootstrap.setPipelineFactory(getPipelineFactory());
             bootstrap.setOption("tcpNoDelay", true);
-            ChannelFuture future = bootstrap.connect(netHeartAddress);
+            ChannelFuture future = bootstrap.connect(acptHeartAddr);
 
             future.getChannel().getCloseFuture().sync();
         } catch (InterruptedException e) {
@@ -63,7 +70,11 @@ public final class LanHeartServerClient {
 
                 ChannelPiplineUtil.addLast(pipeline,
                         new IdleStateHandler(timer, 10, 10, allIdleTimeSeconds),
-                        new LanHeartInboundHandler(LanHeartServerClient.this, lanProxyAddr));
+                        new LanHeartInboundHandler(
+                                LanHeartClient.this,
+                                backClientFactory,
+                                acptUserAddr
+                        ));
 
                 HeartMsgCodecFactory.addEncoderAtLast(pipeline);
                 return pipeline;

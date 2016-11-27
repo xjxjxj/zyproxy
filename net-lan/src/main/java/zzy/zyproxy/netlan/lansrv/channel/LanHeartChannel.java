@@ -2,7 +2,6 @@ package zzy.zyproxy.netlan.lansrv.channel;
 
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
-import org.jboss.netty.channel.ChannelHandlerContext;
 import zzy.zyproxy.core.packet.heart.HeartMsg;
 import zzy.zyproxy.netlan.channel.HeartChannel;
 
@@ -31,7 +30,7 @@ public class LanHeartChannel extends HeartChannel {
 
     public ChannelFuture writeRegisterLanHeart(InetSocketAddress lanProxyAddr) {
         HeartMsg heartMsg = new HeartMsg();
-        heartMsg.setHeartBody(heartMsg.new RegisterLanHeart().setProxyPort(lanProxyAddr.getPort()));
+        heartMsg.setHeartBody(heartMsg.new LanRegisterHeart().setNetUserProxyPort(lanProxyAddr.getPort()));
         return channel.write(heartMsg);
     }
     public ChannelFuture writePing() {

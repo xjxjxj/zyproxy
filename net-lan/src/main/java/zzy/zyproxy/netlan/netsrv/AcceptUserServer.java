@@ -17,11 +17,11 @@ import java.net.SocketAddress;
  */
 public final class AcceptUserServer extends AcceptServer {
     private final static Logger LOGGER = LoggerFactory.getLogger(AcceptUserServer.class);
-    private final BackChannelPool backChannelPool;
+    private final ChannelShare channelShare;
 
-    public AcceptUserServer(SocketAddress socketAddress, BackChannelPool backChannelPool) {
+    public AcceptUserServer(SocketAddress socketAddress, ChannelShare channelShare) {
         super(socketAddress);
-        this.backChannelPool = backChannelPool;
+        this.channelShare = channelShare;
     }
 
     @Override
@@ -37,7 +37,7 @@ public final class AcceptUserServer extends AcceptServer {
                 HeartMsgCodecFactory.addDecoderAtLast(pipeline);
 
                 ChannelPiplineUtil.addLast(pipeline,
-                        new AcceptUserInboundHandler(backChannelPool));
+                        new AcceptUserInboundHandler(channelShare));
 
                 HeartMsgCodecFactory.addEncoderAtLast(pipeline);
                 return pipeline;

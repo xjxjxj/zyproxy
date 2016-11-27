@@ -6,7 +6,8 @@ import org.jboss.netty.handler.timeout.IdleStateEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import zzy.zyproxy.core.packet.heart.HeartMsg;
-import zzy.zyproxy.netlan.lansrv.LanHeartServerClient;
+import zzy.zyproxy.netlan.lansrv.BackClientFactory;
+import zzy.zyproxy.netlan.lansrv.LanHeartClient;
 import zzy.zyproxy.netlan.lansrv.channel.LanHeartChannel;
 
 import java.net.InetSocketAddress;
@@ -19,12 +20,15 @@ import java.util.concurrent.TimeUnit;
 public class LanHeartInboundHandler extends SimpleChannelUpstreamHandler {
     private final static Logger LOGGER = LoggerFactory.getLogger(LanHeartInboundHandler.class);
     private int allIdleCount = 0;
-    private LanHeartServerClient lanHeartServerClient;
+    private LanHeartClient lanHeartClient;
+    private final BackClientFactory backClientFactory;
     private final InetSocketAddress lanProxyAddr;
     private LanHeartChannel lanHeartChannel = new LanHeartChannel(null);
 
-    public LanHeartInboundHandler(LanHeartServerClient lanHeartServerClient, InetSocketAddress lanProxyAddr) {
-        this.lanHeartServerClient = lanHeartServerClient;
+    public LanHeartInboundHandler(LanHeartClient lanHeartClient,
+                                  BackClientFactory backClientFactory, InetSocketAddress lanProxyAddr) {
+        this.lanHeartClient = lanHeartClient;
+        this.backClientFactory = backClientFactory;
         this.lanProxyAddr = lanProxyAddr;
     }
 
@@ -49,6 +53,15 @@ public class LanHeartInboundHandler extends SimpleChannelUpstreamHandler {
         if (msg0.isPong()) {
             msgPong(ctx, msg0);
         }
+        if (msg0.isNetRequestNewChannel()) {
+            msgNetRequestNewChannel(ctx, msg0);
+        }
+    }
+
+    private void msgNetRequestNewChannel(ChannelHandlerContext ctx, HeartMsg msg0) {
+        HeartMsg.NetRequestNewChannel netRequestNewChannel = msg0.asSubNetRequestNewChannel();
+        backClientFactory.getBackClient();
+
     }
 
     private void msgPong(ChannelHandlerContext ctx, HeartMsg msg0) {
@@ -71,7 +84,7 @@ public class LanHeartInboundHandler extends SimpleChannelUpstreamHandler {
             allIdleCount++;
             if (allIdleCount > 3) {
                 ctx.getChannel().close().awaitUninterruptibly(10, TimeUnit.SECONDS);
-                lanHeartServerClient.reConnect();
+                lanHeartClient.reConnect();
                 return;
             }
             LOGGER.debug("LAN端，心跳检测，长时间没有{}@{}", state, ctx.getChannel());
