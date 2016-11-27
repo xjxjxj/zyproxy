@@ -35,38 +35,7 @@ public abstract class MsgPackUtil {
         }
     }
 
-
-    private byte[] write(Object object) throws IOException {
-//        register(object.getClass());
-
-        return msgpacker.write(object);
-    }
-
-    private void register(Class<?> objectClass) {
-
-    }
-
-    public <T> T read(byte[] raw, T v) throws IOException {
-//        register(v.getClass());
-
-        return msgpacker.read(raw, v);
-    }
-
-    public static byte[] pack(Object object) {
-        try {
-            return instance.write(object);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    public static <T> T unpack(byte[] bytes, T v) {
-        try {
-            return instance.read(bytes, v);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return null;
+    public static MessagePack getMsgpacker() {
+        return instance.msgpacker;
     }
 }

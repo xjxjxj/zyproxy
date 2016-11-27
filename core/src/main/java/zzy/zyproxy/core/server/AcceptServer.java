@@ -17,8 +17,8 @@ import java.util.Map;
  */
 public abstract class AcceptServer {
     private final static Logger LOGGER = LoggerFactory.getLogger(AcceptServer.class);
-    ServerBootstrap bootstrap;
-    SocketAddress socketAddress;
+    private ServerBootstrap bootstrap;
+    private SocketAddress socketAddress;
 
     public AcceptServer(SocketAddress socketAddress) {
         this.socketAddress = socketAddress;
@@ -35,7 +35,6 @@ public abstract class AcceptServer {
 
             // Bind and start to accept incoming connections.
             channel = bootstrap.bind(socketAddress);
-            System.out.println(channel.getClass().getName());
             LOGGER.info("[{}],bind:{}",getAcceptServerName(), socketAddress);
             channel.getCloseFuture().sync();
         } catch (InterruptedException e) {
@@ -54,11 +53,11 @@ public abstract class AcceptServer {
 
     protected abstract ChannelFactory getChannelFactory();
 
-    public void stop() {
+    private void stop() {
         bootstrap.shutdown();
     }
 
-    protected Map<String, Object> getOptions() {
+    private Map<String, Object> getOptions() {
         return new HashMap<String, Object>() {{
             put("child.tcpNoDelay", true);
         }};

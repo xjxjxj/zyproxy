@@ -1,4 +1,4 @@
-package zzy.zyproxy.lanserver.netsrv;
+package zzy.zyproxy.netlan.netsrv;
 
 import org.jboss.netty.channel.*;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
@@ -16,7 +16,7 @@ public final class AcceptBackServer extends AcceptServer {
     private final static Logger LOGGER = LoggerFactory.getLogger(AcceptBackServer.class);
     private final static Logger HANDLER_LOGGER = LoggerFactory.getLogger(AcceptBackServerHandler.class);
 
-    public AcceptBackServer(SocketAddress socketAddress) {
+    public AcceptBackServer(SocketAddress socketAddress, BackChannelPool backChannelPool) {
         super(socketAddress);
     }
 

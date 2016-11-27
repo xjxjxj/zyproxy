@@ -1,11 +1,11 @@
-package zzy.zyproxy.lanserver.lansrv;
+package zzy.zyproxy.netlan.lansrv;
 
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.*;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import zzy.zyproxy.core.codec.msgpackcodec.MsgPackCodecFactory;
+import zzy.zyproxy.core.packet.heart.HeartMsgCodecFactory;
 
 import java.net.SocketAddress;
 import java.util.concurrent.Executors;
@@ -47,14 +47,14 @@ public final class BackServerClientFactory {
         }
     }
 
-    protected ChannelPipelineFactory getPipelineFactory() {
+    private ChannelPipelineFactory getPipelineFactory() {
         return new ChannelPipelineFactory() {
             public ChannelPipeline getPipeline() throws Exception {
                 ChannelPipeline pipeline = Channels.pipeline();
-                MsgPackCodecFactory.addDecoderAtLast(pipeline);
+                HeartMsgCodecFactory.addDecoderAtLast(pipeline);
 
 
-                MsgPackCodecFactory.addEncoderAtLast(pipeline);
+                HeartMsgCodecFactory.addEncoderAtLast(pipeline);
                 return pipeline;
             }
         };

@@ -1,4 +1,4 @@
-package zzy.zyproxy.lanserver.channel;
+package zzy.zyproxy.netlan.channel;
 
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.slf4j.Logger;

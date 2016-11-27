@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!--junit-->
 <configuration scan="true">
-    <property name="APP" value="zhitou_sec_web"/>
+    <property name="APP" value="zyproxy"/>
     <property name="LOG_HOME" value="/export/log/${APP}"/>
 
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
@@ -29,6 +29,7 @@
     </appender>
 
     <logger name="zzy.zyproxy" level="DEBUG"/>
+    <logger name="zzy.zyproxy.core.codec.msgpackcodec" level="INFO"/>
 
     <root level="INFO">
         <appender-ref ref="DETAIL"/>
