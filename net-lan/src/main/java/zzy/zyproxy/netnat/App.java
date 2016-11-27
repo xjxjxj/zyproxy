@@ -1,10 +1,10 @@
-package zzy.zyproxy.netlan;
+package zzy.zyproxy.netnat;
 
-import zzy.zyproxy.netlan.lansrv.LanHeartClient;
-import zzy.zyproxy.netlan.netsrv.AcceptBackServer;
-import zzy.zyproxy.netlan.netsrv.AcceptHeartServer;
-import zzy.zyproxy.netlan.netsrv.AcceptUserServer;
-import zzy.zyproxy.netlan.netsrv.ChannelShare;
+import zzy.zyproxy.netnat.natsrv.NatHeartClient;
+import zzy.zyproxy.netnat.netsrv.AcceptNatServer;
+import zzy.zyproxy.netnat.netsrv.AcceptHeartServer;
+import zzy.zyproxy.netnat.netsrv.AcceptUserServer;
+import zzy.zyproxy.netnat.netsrv.ChannelShare;
 
 import java.net.InetSocketAddress;
 
@@ -25,8 +25,8 @@ public class App {
 
         Thread acceptBackServer = new Thread(new Runnable() {
             public void run() {
-                AcceptBackServer acceptBackServer = new AcceptBackServer(acptBackAddr, channelShare);
-                acceptBackServer.start();
+                AcceptNatServer acceptNatServer = new AcceptNatServer(acptBackAddr, channelShare);
+                acceptNatServer.start();
             }
         });
         Thread acceptHeartServer = new Thread(new Runnable() {
@@ -44,20 +44,20 @@ public class App {
         //backHeartServerClient
         Thread backHeartServerClient = new Thread(new Runnable() {
             public void run() {
-                LanHeartClient lanHeartClient = new LanHeartClient(
+                NatHeartClient natHeartClient = new NatHeartClient(
                         acptHeartAddr,
                         acptUserAddr,
                         acptBackAddr,
                         lanRealAddr,
                         (int) (allIdleTimeSeconds * 0.8f));
-                lanHeartClient.start();
+                natHeartClient.start();
             }
         });
 
         acceptBackServer.start();
         acceptUserServer.start();
         acceptHeartServer.start();
-        Thread.sleep(5000);
+        Thread.sleep(3000);
         backHeartServerClient.start();
         synchronized (App.class) {
             do {

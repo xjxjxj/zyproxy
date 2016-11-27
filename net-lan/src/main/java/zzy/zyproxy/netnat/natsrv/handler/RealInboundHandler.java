@@ -1,4 +1,4 @@
-package zzy.zyproxy.netlan.lansrv.handler;
+package zzy.zyproxy.netnat.natsrv.handler;
 
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 

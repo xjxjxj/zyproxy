@@ -24,7 +24,7 @@ public class MsgPackUtilTest {
     @Test
     public void test0() throws Exception {
         HeartMsg heartMsg = new HeartMsg();
-        heartMsg.setHeartBody(heartMsg.new RegisterLanHeart().setProxyPort(123));
+        heartMsg.setHeartBody(heartMsg.new NatRegisterHeart().setNetAcptUserPort(123));
         MessagePack msgpacker = MsgPackUtil.getMsgpacker();
         byte[] write = msgpacker.write(heartMsg);
         System.out.println(Arrays.toString(write));

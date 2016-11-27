@@ -1,9 +1,9 @@
-package zzy.zyproxy.netlan.netsrv.channel;
+package zzy.zyproxy.netnat.netsrv.channel;
 
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
 import zzy.zyproxy.core.packet.heart.HeartMsg;
-import zzy.zyproxy.netlan.channel.HeartChannel;
+import zzy.zyproxy.netnat.channel.HeartChannel;
 
 /**
  * @author zhouzhongyuan
@@ -33,8 +33,9 @@ public class NetHeartChannel extends HeartChannel {
         return channel.write(msg);
     }
 
-    public void writeReqBackChannel() {
+    public ChannelFuture writeReqNatChannel() {
         HeartMsg msg = new HeartMsg();
-        msg.setHeartBody(msg.new NetRequestNewChannel());
+        msg.setHeartBody(msg.new NetRequestBTPChannel());
+        return channel.write(msg);
     }
 }

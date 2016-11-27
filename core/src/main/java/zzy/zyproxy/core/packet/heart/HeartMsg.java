@@ -2,7 +2,6 @@ package zzy.zyproxy.core.packet.heart;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.msgpack.annotation.Message;
-import org.msgpack.annotation.OrdinalEnum;
 import zzy.zyproxy.core.packet.Packet;
 
 /**
@@ -13,7 +12,7 @@ import zzy.zyproxy.core.packet.Packet;
 public class HeartMsg implements Packet {
     private int HEART_TYPE = 0x000a;
 
-    abstract class HeartBody {
+    private abstract class HeartBody {
         protected abstract void setOuterHeartType();
     }
 
@@ -25,37 +24,37 @@ public class HeartMsg implements Packet {
     //############[================]############//
     //############[注册新的代理端口]############//
     //############[================]############//
-    private static final int REGISTER_LAN_HEART = 0x001a;
+    private static final int NAT_REGISTER_HEART = 0x001a;
 
-    private Integer registerLanHeartPort;
+    private Integer netUserAcptPort;
 
-    public class RegisterLanHeart extends HeartBody {
+    public class NatRegisterHeart extends HeartBody {
 
-        public Integer getProxyPort() {
-            return registerLanHeartPort;
+        public Integer getNetAcptUserPort() {
+            return netUserAcptPort;
         }
 
-        public RegisterLanHeart setProxyPort(Integer port) {
-            registerLanHeartPort = port;
+        public NatRegisterHeart setNetAcptUserPort(Integer port) {
+            netUserAcptPort = port;
             return this;
         }
 
         protected void setOuterHeartType() {
-            HEART_TYPE = REGISTER_LAN_HEART;
+            HEART_TYPE = NAT_REGISTER_HEART;
         }
     }
 
-    public boolean isRegisterLanHeart() {
-        return REGISTER_LAN_HEART == HEART_TYPE;
+    public boolean isNatRegisterHeart() {
+        return NAT_REGISTER_HEART == HEART_TYPE;
     }
 
-    public RegisterLanHeart asSubRegisterLanHeart() {
-        return new RegisterLanHeart();
+    public NatRegisterHeart asSubNatRegisterHeart() {
+        return new NatRegisterHeart();
     }
 
 
     //############[========== ]############//
-    //############[LAN发送PING]############//
+    //############[NAT发送PING]############//
     //############[===========]############//
     private static final int PING = 0x002a;
 
@@ -95,47 +94,88 @@ public class HeartMsg implements Packet {
     //############[========== ]############//
     //############[net端发起back连接请求]############//
     //############[===========]############//
-    private static final int NET_REQUEST_NEW_CHANNEL = 0x004a;
+    private static final int NET_REQUEST_BTP_CHANNEL = 0x004a;
 
-    public class NetRequestNewChannel extends HeartBody {
+    private int netRequestBTPChannelNum = 1;
+
+    public class NetRequestBTPChannel extends HeartBody {
+        public void setNetRequestNewChannelNum(int num) {
+            netRequestBTPChannelNum = num;
+        }
+
+        public int getNetRequestNewChannelNum() {
+            return netRequestBTPChannelNum;
+        }
+
         protected void setOuterHeartType() {
-            HEART_TYPE = NET_REQUEST_NEW_CHANNEL;
+            HEART_TYPE = NET_REQUEST_BTP_CHANNEL;
         }
     }
 
-    public boolean isNetRequestNewChannel() {
-        return NET_REQUEST_NEW_CHANNEL == HEART_TYPE;
+    public boolean isNetRequestBTPChannel() {
+        return NET_REQUEST_BTP_CHANNEL == HEART_TYPE;
     }
 
-    public NetRequestNewChannel asSubNetRequestNewChannel() {
-        return new NetRequestNewChannel();
+    public NetRequestBTPChannel asSubNetRequestBTPChannel() {
+        return new NetRequestBTPChannel();
     }
 
     //############[========== ]############//
-    //############[lan端响应back连接请求]############//
+    //############[Nat端响应btp连接请求]############//
     //############[===========]############//
-    private static final int LAN_RESPONSE_NEW_CHANNEL = 0x005a;
+    private static final int NAT_RESPONSE_BTP_CHANNEL = 0x005a;
 
-    public class LanResponseNewChannel extends HeartBody {
+    public class LanResponseBTPChannel extends HeartBody {
         protected void setOuterHeartType() {
-            HEART_TYPE = LAN_RESPONSE_NEW_CHANNEL;
+            HEART_TYPE = NAT_RESPONSE_BTP_CHANNEL;
         }
     }
 
-    public boolean isLanResponseNewChannel() {
-        return LAN_RESPONSE_NEW_CHANNEL == HEART_TYPE;
+    public boolean isLanResponseBTPChannel() {
+        return NAT_RESPONSE_BTP_CHANNEL == HEART_TYPE;
     }
 
-    public LanResponseNewChannel asSubLanResponseNewChannel() {
-        return new LanResponseNewChannel();
+    public LanResponseBTPChannel asSubLanResponseBTPChannel() {
+        return new LanResponseBTPChannel();
     }
 
+    //############[========== ]############//
+    //############[Nat端注册btp channel]############//
+    //############[===========]############//
+    private static final int NAT_REGISTER_BTP_CHANNEL = 0x006a;
 
+    private int registerBTPAcptUserPort;
+
+    public class NatRegisterBTPChannel extends HeartBody {
+
+        protected void setOuterHeartType() {
+            HEART_TYPE = NAT_REGISTER_BTP_CHANNEL;
+        }
+
+        public NatRegisterBTPChannel setAcptUserPort(int acptUserPort) {
+            registerBTPAcptUserPort = acptUserPort;
+            return this;
+        }
+
+        public int getAcptUserPort() {
+            return registerBTPAcptUserPort;
+        }
+    }
+
+    public boolean isNatRegisterBTPChannel() {
+        return NAT_REGISTER_BTP_CHANNEL == HEART_TYPE;
+    }
+
+    public NatRegisterBTPChannel asSubNatRegisterBTPChannel() {
+        return new NatRegisterBTPChannel();
+    }
+
+    ////-------------------
     @Override
     public String toString() {
         return new ToStringBuilder(this)
                 .append("HEART_TYPE", HEART_TYPE)
-                .append("registerLanHeartPort", registerLanHeartPort)
+                .append("netUserAcptPort", netUserAcptPort)
                 .toString();
     }
 }

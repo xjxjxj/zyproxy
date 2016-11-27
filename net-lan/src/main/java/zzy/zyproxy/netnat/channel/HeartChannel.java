@@ -1,9 +1,7 @@
-package zzy.zyproxy.netlan.channel;
+package zzy.zyproxy.netnat.channel;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelFuture;
-import zzy.zyproxy.core.packet.heart.HeartMsg;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;

@@ -1,9 +1,10 @@
-package zzy.zyproxy.netlan.netsrv.handler;
+package zzy.zyproxy.netnat.netsrv.handler;
 
 import org.jboss.netty.channel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import zzy.zyproxy.netlan.netsrv.ChannelShare;
+import zzy.zyproxy.netnat.netsrv.ChannelShare;
+import zzy.zyproxy.netnat.netsrv.channel.UserToNatChannel;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -15,25 +16,42 @@ import java.net.SocketAddress;
 public class AcceptUserInboundHandler extends SimpleChannelUpstreamHandler {
     private final static Logger LOGGER = LoggerFactory.getLogger(AcceptUserInboundHandler.class);
     private final ChannelShare channelShare;
+    private UserToNatChannel userToNatChannel;
 
     public AcceptUserInboundHandler(ChannelShare channelShare) {
         this.channelShare = channelShare;
     }
 
     @Override
-    public void channelOpen(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-        // Suspend incoming traffic until connected to the remote host.
-        final Channel inboundChannel = e.getChannel();
-        inboundChannel.setReadable(false).awaitUninterruptibly();
-        SocketAddress localAddress = inboundChannel.getLocalAddress();
-        if (localAddress instanceof InetSocketAddress) {
-            InetSocketAddress localAdd = (InetSocketAddress) localAddress;
-            channelShare.takeUserToBackChannel(ctx.getChannel(),localAdd);
-        }
+    public void channelOpen(final ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+        final Channel channel = e.getChannel();
+        channel.setReadable(false).addListener(new ChannelFutureListener() {
+            public void operationComplete(ChannelFuture future) throws Exception {
+                if (!future.isSuccess()) {
+                    LOGGER.debug("channel.setReadable(false)#isSuccess");
+                    channel.close();
+                }
+                SocketAddress localAddress = channel.getLocalAddress();
+                if (localAddress instanceof InetSocketAddress) {
+                    InetSocketAddress localAdd = (InetSocketAddress) localAddress;
+                    channelShare.takeUserToNatChannel(channel, localAdd, new ChannelShare.takeUserToNatChannelCallable() {
+                        public void call(UserToNatChannel userToNatChannel0) {
+                            channel.setReadable(true);
+                            if (userToNatChannel0 == null) {
+                                channel.close();
+                            }
+                            userToNatChannel = userToNatChannel0;
+                        }
+                    });
+                }
+            }
+        });
     }
 
     @Override
     public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
+        Object message = e.getMessage();
+        System.out.println(message.getClass().getName());
         LOGGER.debug("messageReceived");
     }
 
@@ -64,7 +82,7 @@ public class AcceptUserInboundHandler extends SimpleChannelUpstreamHandler {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
-        LOGGER.debug("exceptionCaught");
+        LOGGER.debug("exceptionCaught，e:{}", e.getCause());
     }
 
     @Override

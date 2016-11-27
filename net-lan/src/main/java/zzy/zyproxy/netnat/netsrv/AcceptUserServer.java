@@ -1,13 +1,12 @@
-package zzy.zyproxy.netlan.netsrv;
+package zzy.zyproxy.netnat.netsrv;
 
 import org.jboss.netty.channel.*;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import zzy.zyproxy.core.packet.heart.HeartMsgCodecFactory;
 import zzy.zyproxy.core.server.AcceptServer;
 import zzy.zyproxy.core.util.ChannelPiplineUtil;
-import zzy.zyproxy.netlan.netsrv.handler.AcceptUserInboundHandler;
+import zzy.zyproxy.netnat.netsrv.handler.AcceptUserInboundHandler;
 
 import java.net.SocketAddress;
 
@@ -34,12 +33,8 @@ public final class AcceptUserServer extends AcceptServer {
         return new ChannelPipelineFactory() {
             public ChannelPipeline getPipeline() throws Exception {
                 ChannelPipeline pipeline = Channels.pipeline();
-                HeartMsgCodecFactory.addDecoderAtLast(pipeline);
-
                 ChannelPiplineUtil.addLast(pipeline,
                         new AcceptUserInboundHandler(channelShare));
-
-                HeartMsgCodecFactory.addEncoderAtLast(pipeline);
                 return pipeline;
             }
         };

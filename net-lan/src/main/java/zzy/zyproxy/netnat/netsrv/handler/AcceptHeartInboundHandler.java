@@ -1,4 +1,4 @@
-package zzy.zyproxy.netlan.netsrv.handler;
+package zzy.zyproxy.netnat.netsrv.handler;
 
 import org.jboss.netty.channel.*;
 import org.jboss.netty.handler.timeout.IdleState;
@@ -6,8 +6,8 @@ import org.jboss.netty.handler.timeout.IdleStateEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import zzy.zyproxy.core.packet.heart.HeartMsg;
-import zzy.zyproxy.netlan.netsrv.ChannelShare;
-import zzy.zyproxy.netlan.netsrv.channel.NetHeartChannel;
+import zzy.zyproxy.netnat.netsrv.ChannelShare;
+import zzy.zyproxy.netnat.netsrv.channel.NetHeartChannel;
 
 /**
  * @author zhouzhongyuan
@@ -34,7 +34,6 @@ public class AcceptHeartInboundHandler extends SimpleChannelUpstreamHandler {
 
     @Override
     public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
-        LOGGER.debug("messageReceived@{}", ctx.getChannel());
         Object message = e.getMessage();
         if (!(message instanceof HeartMsg)) {
             super.messageReceived(ctx, e);
@@ -47,14 +46,22 @@ public class AcceptHeartInboundHandler extends SimpleChannelUpstreamHandler {
         if (msg0.isPing()) {
             msgPing(netHeartChannel, msg0);
         }
-        if (msg0.isLanRegisterHeart()) {
+        if (msg0.isNatRegisterHeart()) {
             msgRegisterLanHeart(netHeartChannel,msg0);
+        }
+        if (msg0.isLanResponseBTPChannel()) {
+            msgLanResponseNewChannel(netHeartChannel,msg0);
         }
     }
 
+    private void msgLanResponseNewChannel(NetHeartChannel netHeartChannel, HeartMsg msg0) {
+        HeartMsg.LanResponseBTPChannel lanResponseBTPChannel = msg0.asSubLanResponseBTPChannel();
+
+    }
+
     private void msgRegisterLanHeart(NetHeartChannel netHeartChannel, HeartMsg msg0) {
-        HeartMsg.LanRegisterHeart lanRegisterHeart = msg0.asSubLanRegisterHeart();
-        channelShare.putNewHeartChannel(netHeartChannel,lanRegisterHeart.getNetUserProxyPort());
+        HeartMsg.NatRegisterHeart natRegisterHeart = msg0.asSubNatRegisterHeart();
+        channelShare.putNewHeartChannel(netHeartChannel, natRegisterHeart.getNetAcptUserPort());
     }
 
     @Override

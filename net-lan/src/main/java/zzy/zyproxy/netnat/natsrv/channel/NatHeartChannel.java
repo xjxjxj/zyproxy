@@ -1,9 +1,9 @@
-package zzy.zyproxy.netlan.lansrv.channel;
+package zzy.zyproxy.netnat.natsrv.channel;
 
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
 import zzy.zyproxy.core.packet.heart.HeartMsg;
-import zzy.zyproxy.netlan.channel.HeartChannel;
+import zzy.zyproxy.netnat.channel.HeartChannel;
 
 import java.net.InetSocketAddress;
 
@@ -11,9 +11,9 @@ import java.net.InetSocketAddress;
  * @author zhouzhongyuan
  * @date 2016/11/27
  */
-public class LanHeartChannel extends HeartChannel {
+public class NatHeartChannel extends HeartChannel {
 
-    public LanHeartChannel(Channel channel) {
+    public NatHeartChannel(Channel channel) {
         super(channel);
     }
 
@@ -25,12 +25,17 @@ public class LanHeartChannel extends HeartChannel {
         if (this.channel.equals(channel)) {
             return this;
         }
-        return new LanHeartChannel(channel);
+        return new NatHeartChannel(channel);
     }
 
     public ChannelFuture writeRegisterLanHeart(InetSocketAddress lanProxyAddr) {
         HeartMsg heartMsg = new HeartMsg();
-        heartMsg.setHeartBody(heartMsg.new LanRegisterHeart().setNetUserProxyPort(lanProxyAddr.getPort()));
+        heartMsg.setHeartBody(heartMsg.new NatRegisterHeart().setNetAcptUserPort(lanProxyAddr.getPort()));
+        return channel.write(heartMsg);
+    }
+    public ChannelFuture writeLanResponseNewChannel() {
+        HeartMsg heartMsg = new HeartMsg();
+        heartMsg.setHeartBody(heartMsg.new LanResponseBTPChannel());
         return channel.write(heartMsg);
     }
     public ChannelFuture writePing() {

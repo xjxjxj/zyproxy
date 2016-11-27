@@ -1,4 +1,4 @@
-package zzy.zyproxy.netlan.lansrv;
+package zzy.zyproxy.netnat.natsrv;
 
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.*;
@@ -10,7 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import zzy.zyproxy.core.packet.heart.HeartMsgCodecFactory;
 import zzy.zyproxy.core.util.ChannelPiplineUtil;
-import zzy.zyproxy.netlan.lansrv.handler.LanHeartInboundHandler;
+import zzy.zyproxy.netnat.natsrv.handler.NatHeartInboundHandler;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
@@ -19,16 +19,16 @@ import java.util.concurrent.Executors;
  * @author zhouzhongyuan
  * @date 2016/11/24
  */
-public final class LanHeartClient {
-    private final static Logger LOGGER = LoggerFactory.getLogger(LanHeartClient.class);
+public final class NatHeartClient {
+    private final static Logger LOGGER = LoggerFactory.getLogger(NatHeartClient.class);
 
     private final int allIdleTimeSeconds;
     private final InetSocketAddress acptHeartAddr;
     private final InetSocketAddress acptUserAddr;
 
-    private BackClientFactory backClientFactory;
+    private NatClientFactory natClientFactory;
 
-    public LanHeartClient(InetSocketAddress acptHeartAddr, InetSocketAddress acptUserAddr,
+    public NatHeartClient(InetSocketAddress acptHeartAddr, InetSocketAddress acptUserAddr,
                           InetSocketAddress acptBackAddr, InetSocketAddress lanRealAddr,
                           int allIdleTimeSeconds) {
         this.acptHeartAddr = acptHeartAddr;
@@ -36,7 +36,7 @@ public final class LanHeartClient {
         this.allIdleTimeSeconds = allIdleTimeSeconds;
 
         RealClientFactory realClientFactory = new RealClientFactory(lanRealAddr);
-        this.backClientFactory = new BackClientFactory(acptBackAddr, realClientFactory);
+        this.natClientFactory = new NatClientFactory(acptBackAddr,acptUserAddr, realClientFactory);
     }
 
 
@@ -70,9 +70,9 @@ public final class LanHeartClient {
 
                 ChannelPiplineUtil.addLast(pipeline,
                         new IdleStateHandler(timer, 10, 10, allIdleTimeSeconds),
-                        new LanHeartInboundHandler(
-                                LanHeartClient.this,
-                                backClientFactory,
+                        new NatHeartInboundHandler(
+                                NatHeartClient.this,
+                                natClientFactory,
                                 acptUserAddr
                         ));
 
