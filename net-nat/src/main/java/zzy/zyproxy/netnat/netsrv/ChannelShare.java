@@ -3,7 +3,7 @@ package zzy.zyproxy.netnat.netsrv;
 import org.jboss.netty.channel.Channel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import zzy.zyproxy.netnat.netsrv.channel.NatChannel;
+import zzy.zyproxy.netnat.netsrv.channel.NatBTPChannel;
 import zzy.zyproxy.netnat.netsrv.channel.NetHeartChannel;
 import zzy.zyproxy.netnat.netsrv.channel.UserToNatChannel;
 
@@ -23,18 +23,18 @@ public class ChannelShare {
     //############[============]############//
     private final ExecutorService taskExecutor = Executors.newCachedThreadPool();
 
-    private volatile HashMap<String, BlockingQueue<NatChannel>> backChannelMap
-            = new HashMap<String, BlockingQueue<NatChannel>>();
+    private volatile HashMap<String, BlockingQueue<NatBTPChannel>> backChannelMap
+            = new HashMap<String, BlockingQueue<NatBTPChannel>>();
 
-    public void putNatChannel(final NatChannel natChannel, final int acptUserPort) {
-        final BlockingQueue<NatChannel> natChannels = backChannelMap.get(String.valueOf(acptUserPort));
+    public void putNatBTPChannel(final NatBTPChannel natBTPChannel, final int acptUserPort) {
+        final BlockingQueue<NatBTPChannel> natBTPChannels = backChannelMap.get(String.valueOf(acptUserPort));
         taskExecutor.submit(new Runnable() {
             public void run() {
                 try {
-                    natChannels.put(natChannel);
-                    LOGGER.debug("putNatChannel success,acptUserPort:{}", acptUserPort);
+                    natBTPChannels.put(natBTPChannel);
+                    LOGGER.debug("putNatBTPChannel success,acptUserPort:{}", acptUserPort);
                 } catch (Exception e) {
-                    natChannel.close();
+                    natBTPChannel.close();
                     e.printStackTrace();
                 }
             }
@@ -54,11 +54,11 @@ public class ChannelShare {
                 try {
                     LOGGER.debug("takeUserToNatChannel#run");
                     int port = localAdd.getPort();
-                    BlockingQueue<NatChannel> channels = backChannelMap.get(String.valueOf(port));
+                    BlockingQueue<NatBTPChannel> channels = backChannelMap.get(String.valueOf(port));
                     if (channels == null) {
                         throw new RuntimeException("不能找到[" + port + "]端口对应的后端服务");
                     }
-                    NatChannel lanToBackChannel = null;
+                    NatBTPChannel lanToBackChannel = null;
                     try {
                         lanToBackChannel = channels.poll(1, TimeUnit.SECONDS);
                         LOGGER.debug("直接从channelPool中取得了backchannel:{}@port:{}", lanToBackChannel, port);
@@ -99,7 +99,7 @@ public class ChannelShare {
         NetHeartChannel netHeartChannelReg = natPortRegister.get(netUserProxyPort);
         if (netHeartChannelReg == null || !netHeartChannelReg.isConnected()) {
             natPortRegister.put(netUserProxyPort, netHeartChannel);
-            backChannelMap.put(netUserProxyPort.toString(), new LinkedBlockingQueue<NatChannel>());
+            backChannelMap.put(netUserProxyPort.toString(), new LinkedBlockingQueue<NatBTPChannel>());
         }
         LOGGER.debug("后台Heart连接池putNewHeartChannel,@NetUserProxyPort:{}", netUserProxyPort);
     }

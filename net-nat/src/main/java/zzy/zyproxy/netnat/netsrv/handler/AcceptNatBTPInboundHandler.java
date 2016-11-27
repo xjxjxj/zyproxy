@@ -5,25 +5,25 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import zzy.zyproxy.core.packet.heart.HeartMsg;
 import zzy.zyproxy.netnat.netsrv.ChannelShare;
-import zzy.zyproxy.netnat.netsrv.channel.NatChannel;
+import zzy.zyproxy.netnat.netsrv.channel.NatBTPChannel;
 
 /**
  * @author zhouzhongyuan
  * @date 2016/11/27
  */
-public class AcceptNatInboundHandler extends SimpleChannelUpstreamHandler {
-    private final static Logger LOGGER = LoggerFactory.getLogger(AcceptNatInboundHandler.class);
+public class AcceptNatBTPInboundHandler extends SimpleChannelUpstreamHandler {
+    private final static Logger LOGGER = LoggerFactory.getLogger(AcceptNatBTPInboundHandler.class);
 
     private final ChannelShare channelShare;
 
-    public AcceptNatInboundHandler(ChannelShare channelShare) {
+    public AcceptNatBTPInboundHandler(ChannelShare channelShare) {
         this.channelShare = channelShare;
     }
 
-    private NatChannel natChannel = new NatChannel(null);
+    private NatBTPChannel natBTPChannel = new NatBTPChannel(null);
 
-    private NatChannel getNatChannel(Channel channel) {
-        return (NatChannel) natChannel.getHeartByChannel(channel);
+    private NatBTPChannel getNatChannel(Channel channel) {
+        return (NatBTPChannel) natBTPChannel.getHeartByChannel(channel);
     }
 
     @Override
@@ -36,16 +36,17 @@ public class AcceptNatInboundHandler extends SimpleChannelUpstreamHandler {
         //------
         HeartMsg msg0 = (HeartMsg) message;
         Channel channel = ctx.getChannel();
-        NatChannel natChannel = getNatChannel(channel);
+        NatBTPChannel natBTPChannel = getNatChannel(channel);
         if (msg0.isNatRegisterBTPChannel()) {
-            msgLanRegisterBack(natChannel, msg0);
+            msgNatRegisterBTP(natBTPChannel, msg0);
         }
     }
 
-    private void msgLanRegisterBack(NatChannel natChannel, HeartMsg msg0) {
-        HeartMsg.NatRegisterBTPChannel natRegisterBTPChannel = msg0.asSubNatRegisterBTPChannel();
-        LOGGER.debug("msgLanRegisterBack,AcptUserPort:{}", natRegisterBTPChannel.getAcptUserPort());
-        channelShare.putNatChannel(natChannel, natRegisterBTPChannel.getAcptUserPort());
+    private void msgNatRegisterBTP(NatBTPChannel natBTPChannel, HeartMsg msg0) {
+        HeartMsg.NatRegisterBTPChannel natRegisterBTPChannel
+                = msg0.asSubNatRegisterBTPChannel();
+        LOGGER.debug("msgNatRegisterBTP,AcptUserPort:{}", natRegisterBTPChannel.getAcptUserPort());
+        channelShare.putNatBTPChannel(natBTPChannel, natRegisterBTPChannel.getAcptUserPort());
     }
 
     @Override

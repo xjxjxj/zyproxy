@@ -7,7 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import zzy.zyproxy.core.packet.heart.HeartMsgCodecFactory;
 import zzy.zyproxy.core.util.ChannelPiplineUtil;
-import zzy.zyproxy.netnat.natsrv.handler.NatInboundHandler;
+import zzy.zyproxy.netnat.natsrv.handler.NatBTPInboundHandler;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
@@ -17,8 +17,8 @@ import java.util.concurrent.Executors;
  * @author zhouzhongyuan
  * @date 2016/11/24
  */
-public final class NatClientFactory {
-    private final static Logger LOGGER = LoggerFactory.getLogger(NatClientFactory.class);
+public final class NatBTPClientFactory {
+    private final static Logger LOGGER = LoggerFactory.getLogger(NatBTPClientFactory.class);
     private final InetSocketAddress acptBackAddr;
     private final InetSocketAddress acptUserAddr;
     private final RealClientFactory realClientFactory;
@@ -28,7 +28,7 @@ public final class NatClientFactory {
 
 
 
-    NatClientFactory(InetSocketAddress acptBackAddr, InetSocketAddress acptUserAddr, RealClientFactory realClientFactory) {
+    NatBTPClientFactory(InetSocketAddress acptBackAddr, InetSocketAddress acptUserAddr, RealClientFactory realClientFactory) {
         this.acptBackAddr = acptBackAddr;
         this.acptUserAddr = acptUserAddr;
         this.realClientFactory = realClientFactory;
@@ -42,7 +42,7 @@ public final class NatClientFactory {
                 HeartMsgCodecFactory.addDecoderAtLast(pipeline);
 
                 ChannelPiplineUtil.addLast(pipeline,
-                        new NatInboundHandler(realClientFactory,acptUserAddr));
+                        new NatBTPInboundHandler(realClientFactory,acptUserAddr));
 
                 HeartMsgCodecFactory.addEncoderAtLast(pipeline);
                 return pipeline;

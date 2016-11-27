@@ -9,9 +9,9 @@ import org.jboss.netty.channel.Channel;
  */
 public class UserToNatChannel {
     private final Channel acptUserchannel;
-    private final NatChannel lanToBackChannel;
+    private final NatBTPChannel lanToBackChannel;
 
-    public UserToNatChannel(Channel acptUserchannel, NatChannel lanToBackChannel) {
+    public UserToNatChannel(Channel acptUserchannel, NatBTPChannel lanToBackChannel) {
         this.acptUserchannel = acptUserchannel;
         this.lanToBackChannel = lanToBackChannel;
     }

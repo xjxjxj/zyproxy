@@ -1,7 +1,7 @@
 package zzy.zyproxy.netnat;
 
 import zzy.zyproxy.netnat.natsrv.NatHeartClient;
-import zzy.zyproxy.netnat.netsrv.AcceptNatServer;
+import zzy.zyproxy.netnat.netsrv.AcceptNatBTPServer;
 import zzy.zyproxy.netnat.netsrv.AcceptHeartServer;
 import zzy.zyproxy.netnat.netsrv.AcceptUserServer;
 import zzy.zyproxy.netnat.netsrv.ChannelShare;
@@ -25,8 +25,8 @@ public class App {
 
         Thread acceptBackServer = new Thread(new Runnable() {
             public void run() {
-                AcceptNatServer acceptNatServer = new AcceptNatServer(acptBackAddr, channelShare);
-                acceptNatServer.start();
+                AcceptNatBTPServer acceptNatBTPServer = new AcceptNatBTPServer(acptBackAddr, channelShare);
+                acceptNatBTPServer.start();
             }
         });
         Thread acceptHeartServer = new Thread(new Runnable() {

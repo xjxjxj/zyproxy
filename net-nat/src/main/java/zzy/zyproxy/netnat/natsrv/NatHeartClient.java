@@ -26,7 +26,7 @@ public final class NatHeartClient {
     private final InetSocketAddress acptHeartAddr;
     private final InetSocketAddress acptUserAddr;
 
-    private NatClientFactory natClientFactory;
+    private NatBTPClientFactory natBTPClientFactory;
 
     public NatHeartClient(InetSocketAddress acptHeartAddr, InetSocketAddress acptUserAddr,
                           InetSocketAddress acptBackAddr, InetSocketAddress lanRealAddr,
@@ -36,7 +36,7 @@ public final class NatHeartClient {
         this.allIdleTimeSeconds = allIdleTimeSeconds;
 
         RealClientFactory realClientFactory = new RealClientFactory(lanRealAddr);
-        this.natClientFactory = new NatClientFactory(acptBackAddr,acptUserAddr, realClientFactory);
+        this.natBTPClientFactory = new NatBTPClientFactory(acptBackAddr,acptUserAddr, realClientFactory);
     }
 
 
@@ -72,7 +72,7 @@ public final class NatHeartClient {
                         new IdleStateHandler(timer, 10, 10, allIdleTimeSeconds),
                         new NatHeartInboundHandler(
                                 NatHeartClient.this,
-                                natClientFactory,
+                                natBTPClientFactory,
                                 acptUserAddr
                         ));
 

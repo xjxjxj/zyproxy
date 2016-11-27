@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 import zzy.zyproxy.core.packet.heart.HeartMsgCodecFactory;
 import zzy.zyproxy.core.server.AcceptServer;
 import zzy.zyproxy.core.util.ChannelPiplineUtil;
-import zzy.zyproxy.netnat.netsrv.handler.AcceptNatInboundHandler;
+import zzy.zyproxy.netnat.netsrv.handler.AcceptNatBTPInboundHandler;
 
 import java.net.SocketAddress;
 
@@ -15,18 +15,18 @@ import java.net.SocketAddress;
  * @author zhouzhongyuan
  * @date 2016/11/24
  */
-public final class AcceptNatServer extends AcceptServer {
-    private final static Logger LOGGER = LoggerFactory.getLogger(AcceptNatServer.class);
+public final class AcceptNatBTPServer extends AcceptServer {
+    private final static Logger LOGGER = LoggerFactory.getLogger(AcceptNatBTPServer.class);
     private final ChannelShare channelShare;
 
-    public AcceptNatServer(SocketAddress socketAddress, ChannelShare channelShare) {
+    public AcceptNatBTPServer(SocketAddress socketAddress, ChannelShare channelShare) {
         super(socketAddress);
         this.channelShare = channelShare;
     }
 
     @Override
     protected String getAcceptServerName() {
-        return "AcceptNatServer";
+        return "AcceptNatBTPServer";
     }
 
 
@@ -38,7 +38,7 @@ public final class AcceptNatServer extends AcceptServer {
                 HeartMsgCodecFactory.addDecoderAtLast(pipeline);
 
                 ChannelPiplineUtil.addLast(pipeline,
-                        new AcceptNatInboundHandler(channelShare)
+                        new AcceptNatBTPInboundHandler(channelShare)
                 );
 
                 HeartMsgCodecFactory.addEncoderAtLast(pipeline);

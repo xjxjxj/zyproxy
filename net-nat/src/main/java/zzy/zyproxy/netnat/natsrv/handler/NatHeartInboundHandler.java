@@ -6,7 +6,7 @@ import org.jboss.netty.handler.timeout.IdleStateEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import zzy.zyproxy.core.packet.heart.HeartMsg;
-import zzy.zyproxy.netnat.natsrv.NatClientFactory;
+import zzy.zyproxy.netnat.natsrv.NatBTPClientFactory;
 import zzy.zyproxy.netnat.natsrv.NatHeartClient;
 import zzy.zyproxy.netnat.natsrv.channel.NatHeartChannel;
 
@@ -21,14 +21,14 @@ public class NatHeartInboundHandler extends SimpleChannelUpstreamHandler {
     private final static Logger LOGGER = LoggerFactory.getLogger(NatHeartInboundHandler.class);
     private int allIdleCount = 0;
     private NatHeartClient natHeartClient;
-    private final NatClientFactory natClientFactory;
+    private final NatBTPClientFactory natBTPClientFactory;
     private final InetSocketAddress acptUserAddr;
     private NatHeartChannel natHeartChannel = new NatHeartChannel(null);
 
     public NatHeartInboundHandler(NatHeartClient natHeartClient,
-                                  NatClientFactory natClientFactory, InetSocketAddress acptUserAddr) {
+                                  NatBTPClientFactory natBTPClientFactory, InetSocketAddress acptUserAddr) {
         this.natHeartClient = natHeartClient;
-        this.natClientFactory = natClientFactory;
+        this.natBTPClientFactory = natBTPClientFactory;
         this.acptUserAddr = acptUserAddr;
     }
 
@@ -61,7 +61,7 @@ public class NatHeartInboundHandler extends SimpleChannelUpstreamHandler {
 
     private void msgNetRequestNewChannel(final NatHeartChannel natHeartChannel, HeartMsg msg0) {
         HeartMsg.NetRequestBTPChannel netRequestBTPChannel = msg0.asSubNetRequestBTPChannel();
-        natClientFactory.getBackClient(netRequestBTPChannel.getNetRequestNewChannelNum()).addListener(new ChannelFutureListener() {
+        natBTPClientFactory.getBackClient(netRequestBTPChannel.getNetRequestNewChannelNum()).addListener(new ChannelFutureListener() {
             public void operationComplete(ChannelFuture future) throws Exception {
                 if (future.isSuccess()) {
                     LOGGER.debug("msgNetRequestNewChannel#future.isSuccess");
