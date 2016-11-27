@@ -5,7 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import zzy.zyproxy.netnat.netsrv.channel.NatBTPChannel;
 import zzy.zyproxy.netnat.netsrv.channel.NetHeartChannel;
-import zzy.zyproxy.netnat.netsrv.channel.UserToNatChannel;
+import zzy.zyproxy.netnat.netsrv.channel.UserNatBTPChannel;
 
 import java.net.InetSocketAddress;
 import java.util.HashMap;
@@ -42,7 +42,7 @@ public class ChannelShare {
     }
 
     public interface takeUserToNatChannelCallable {
-        void call(UserToNatChannel userToNatChannel);
+        void call(UserNatBTPChannel userNatBTPChannel);
     }
 
     public void takeUserToNatChannel(final Channel acptUserchannel,
@@ -50,7 +50,7 @@ public class ChannelShare {
                                      final takeUserToNatChannelCallable callable) {
         Runnable userToNatTask = new Runnable() {
             public void run() {
-                UserToNatChannel userToNatChannel = null;
+                UserNatBTPChannel userNatBTPChannel = null;
                 try {
                     LOGGER.debug("takeUserToNatChannel#run");
                     int port = localAdd.getPort();
@@ -68,14 +68,14 @@ public class ChannelShare {
                             lanToBackChannel = channels.poll(10, TimeUnit.SECONDS);
                         }
                         if (lanToBackChannel != null) {
-                            userToNatChannel = new UserToNatChannel(acptUserchannel, lanToBackChannel);
+                            userNatBTPChannel = new UserNatBTPChannel(acptUserchannel, lanToBackChannel);
                         }
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
                 } finally {
-                    LOGGER.debug("callable.call，{}", userToNatChannel);
-                    callable.call(userToNatChannel);
+                    LOGGER.debug("callable.call，{}", userNatBTPChannel);
+                    callable.call(userNatBTPChannel);
                 }
             }
         };

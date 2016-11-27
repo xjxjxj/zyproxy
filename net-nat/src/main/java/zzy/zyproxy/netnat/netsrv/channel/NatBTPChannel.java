@@ -1,6 +1,8 @@
 package zzy.zyproxy.netnat.netsrv.channel;
 
 import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.ChannelFuture;
+import zzy.zyproxy.core.packet.heart.HeartMsg;
 import zzy.zyproxy.netnat.channel.HeartChannel;
 
 /**
@@ -14,7 +16,6 @@ public class NatBTPChannel extends HeartChannel{
     }
 
 
-
     public HeartChannel getHeartByChannel(Channel channel) {
         if (this.channel == null) {
             this.channel = channel;
@@ -24,5 +25,9 @@ public class NatBTPChannel extends HeartChannel{
             return this;
         }
         return new NatBTPChannel(channel);
+    }
+
+    public ChannelFuture write(HeartMsg msg) {
+        return channel.write(msg);
     }
 }

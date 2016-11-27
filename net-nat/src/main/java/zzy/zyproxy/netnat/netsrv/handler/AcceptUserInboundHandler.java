@@ -1,10 +1,11 @@
 package zzy.zyproxy.netnat.netsrv.handler;
 
+import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import zzy.zyproxy.netnat.netsrv.ChannelShare;
-import zzy.zyproxy.netnat.netsrv.channel.UserToNatChannel;
+import zzy.zyproxy.netnat.netsrv.channel.UserNatBTPChannel;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -16,7 +17,7 @@ import java.net.SocketAddress;
 public class AcceptUserInboundHandler extends SimpleChannelUpstreamHandler {
     private final static Logger LOGGER = LoggerFactory.getLogger(AcceptUserInboundHandler.class);
     private final ChannelShare channelShare;
-    private UserToNatChannel userToNatChannel;
+    private UserNatBTPChannel userNatBTPChannel;
 
     public AcceptUserInboundHandler(ChannelShare channelShare) {
         this.channelShare = channelShare;
@@ -35,12 +36,12 @@ public class AcceptUserInboundHandler extends SimpleChannelUpstreamHandler {
                 if (localAddress instanceof InetSocketAddress) {
                     InetSocketAddress localAdd = (InetSocketAddress) localAddress;
                     channelShare.takeUserToNatChannel(channel, localAdd, new ChannelShare.takeUserToNatChannelCallable() {
-                        public void call(UserToNatChannel userToNatChannel0) {
+                        public void call(UserNatBTPChannel userNatBTPChannel0) {
                             channel.setReadable(true);
-                            if (userToNatChannel0 == null) {
+                            if (userNatBTPChannel0 == null) {
                                 channel.close();
                             }
-                            userToNatChannel = userToNatChannel0;
+                            userNatBTPChannel = userNatBTPChannel0;
                         }
                     });
                 }
@@ -51,7 +52,24 @@ public class AcceptUserInboundHandler extends SimpleChannelUpstreamHandler {
     @Override
     public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
         Object message = e.getMessage();
-        System.out.println(message.getClass().getName());
+        final Channel channel = ctx.getChannel();
+        if (!(message instanceof ChannelBuffer)) {
+            super.messageReceived(ctx, e);
+            return;
+        }
+        ChannelBuffer buffer = (ChannelBuffer) message;
+        byte[] bytes = new byte[buffer.readableBytes()];
+        buffer.readBytes(bytes);
+        channel.setReadable(false);
+        userNatBTPChannel.userWriteToNatBTP(bytes).addListener(new ChannelFutureListener() {
+            public void operationComplete(ChannelFuture channelFuture) throws Exception {
+                if (channelFuture.isSuccess()) {
+                    channel.setReadable(true);
+                } else {
+                    channel.close();
+                }
+            }
+        });
         LOGGER.debug("messageReceived");
     }
 

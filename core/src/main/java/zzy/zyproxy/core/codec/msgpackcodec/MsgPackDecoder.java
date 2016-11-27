@@ -14,7 +14,7 @@ import zzy.zyproxy.core.packet.heart.HeartMsg;
  */
 public class MsgPackDecoder extends OneToOneDecoder {
     private final static Logger LOGGER = LoggerFactory.getLogger(MsgPackDecoder.class);
-    Class clazz;
+    private Class clazz;
 
     public MsgPackDecoder(Class clazz) {
         this.clazz = clazz;

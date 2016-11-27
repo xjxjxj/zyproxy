@@ -170,6 +170,37 @@ public class HeartMsg implements Packet {
         return new NatRegisterBTPChannel();
     }
 
+    //############[========== ]############//
+    //############[用户发送信息传送到后端服务]############//
+    //############[===========]############//
+    private static final int USER_WRITE_TO_NAT_BTP = 0x007a;
+
+    private byte[] userWriteToNatMsgBody;
+
+    public class UserWriteToNatBTP extends HeartBody {
+
+        protected void setOuterHeartType() {
+            HEART_TYPE = USER_WRITE_TO_NAT_BTP;
+        }
+
+        public UserWriteToNatBTP setMsgBody(byte[] msgBody) {
+            userWriteToNatMsgBody = msgBody;
+            return this;
+        }
+
+        public byte[] getMsgBody() {
+            return userWriteToNatMsgBody;
+        }
+    }
+
+    public boolean isUserWriteToNatBTP() {
+        return USER_WRITE_TO_NAT_BTP == HEART_TYPE;
+    }
+
+    public UserWriteToNatBTP asSubUserWriteToNatBTP() {
+        return new UserWriteToNatBTP();
+    }
+
     ////-------------------
     @Override
     public String toString() {
