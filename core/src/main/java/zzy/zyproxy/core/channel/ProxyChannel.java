@@ -17,14 +17,17 @@ public abstract class ProxyChannel<T> {
     /**
      * channel 可以是null 使用getHeartChannel()可以进行channel的更新
      *
-     * @param channel
+     * @param channel 代理的channel
      */
     public ProxyChannel(Channel channel) {
         this.channel = channel;
     }
 
     public ChannelFuture disconnect() {
-        return channel.disconnect();
+        if (channel != null && channel.isConnected()) {
+            return channel.disconnect();
+        }
+        return null;
     }
 
     public Channel getChannel() {

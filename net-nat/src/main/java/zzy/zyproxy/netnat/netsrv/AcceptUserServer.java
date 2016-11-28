@@ -36,7 +36,6 @@ public final class AcceptUserServer extends AcceptServer {
             public ChannelPipeline getPipeline() throws Exception {
                 ChannelPipeline pipeline = Channels.pipeline();
                 ChannelPiplineUtil.addLast(pipeline,
-                    new LoggingHandler(InternalLogLevel.INFO),
                     new AcceptUserInboundHandler(channelShare));
                 return pipeline;
             }

@@ -3,6 +3,9 @@ package zzy.zyproxy.netnat.natsrv.channel;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
+import org.jboss.netty.channel.ChannelFutureListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import zzy.zyproxy.core.channel.ProxyChannel;
 import zzy.zyproxy.core.packet.heart.HeartMsg;
 import zzy.zyproxy.netnat.channel.HeartChannel;
@@ -14,6 +17,7 @@ import java.net.InetSocketAddress;
  * @date 2016/11/27
  */
 public class RealNatBTPChannel {
+    private final static Logger LOGGER = LoggerFactory.getLogger(RealNatBTPChannel.class);
 
     private NatBTPChannel natBTPChannel;
     private RealChannel realChannel;
@@ -31,13 +35,6 @@ public class RealNatBTPChannel {
     public RealChannel flushRealChannel(Channel realChannel) {
         this.realChannel = this.realChannel.flushChannel(realChannel);
         return this.realChannel;
-    }
-
-
-    public RealNatBTPChannel flushRealNatBTPChannel(Channel realChannel, Channel natBTPChannel) {
-        this.natBTPChannel = flushNatBTPChannel(natBTPChannel);
-        this.realChannel = flushRealChannel(realChannel);
-        return this;
     }
 
     public void close() {
@@ -113,11 +110,29 @@ public class RealNatBTPChannel {
         public ChannelFuture writeRealChannelClosed() {
             HeartMsg msg = new HeartMsg();
             msg.setHeartBody(msg.new RealChannelClosed());
-            return channel.write(msg);
+            ChannelFuture future = channel.write(msg);
+            recycle(future);
+            return future;
         }
 
         public ChannelFuture userChannelClosed() {
-            return realChannel.disconnect();
+            ChannelFuture future = realChannel.disconnect();
+            recycle(future);
+            return future;
         }
+    }
+
+    private void recycle(ChannelFuture future) {
+        if (future == null) {
+            return;
+        }
+        future.addListener(new ChannelFutureListener() {
+            public void operationComplete(ChannelFuture future) throws Exception {
+                if (future.isSuccess()) {
+                    LOGGER.debug("userChannelClosed 回收NAT BTP channel，{}", natBTPChannel);
+                    flushRealChannel(null);
+                }
+            }
+        });
     }
 }

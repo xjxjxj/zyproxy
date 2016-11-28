@@ -80,8 +80,9 @@ public class RealInboundHandler extends SimpleChannelUpstreamHandler {
             .writeToNatBTPchannelClosed();
     }
 
+    @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
-        LOGGER.warn("{}", e);
+        e.getCause().printStackTrace();
     }
 }

@@ -30,8 +30,10 @@ public class ChannelShare {
         taskExecutor.submit(new Runnable() {
             public void run() {
                 try {
-                    natBTPChannels.put(userNatBTPChannel);
-                    LOGGER.debug("putNatBTPChannel success,acptUserPort:{}", acptUserPort);
+                    if (!natBTPChannels.contains(userNatBTPChannel)) {
+                        natBTPChannels.put(userNatBTPChannel);
+                        LOGGER.debug("putNatBTPChannel success,acptUserPort:{}", acptUserPort);
+                    }
                 } catch (Exception e) {
                     userNatBTPChannel.close();
                     e.printStackTrace();

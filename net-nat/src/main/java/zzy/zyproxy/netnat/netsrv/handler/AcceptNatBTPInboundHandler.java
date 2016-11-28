@@ -14,13 +14,13 @@ import zzy.zyproxy.netnat.netsrv.channel.UserNatBTPChannel;
 public class AcceptNatBTPInboundHandler extends SimpleChannelUpstreamHandler {
     private final static Logger LOGGER = LoggerFactory.getLogger(AcceptNatBTPInboundHandler.class);
 
-    private final ChannelShare channelShare;
+    private ChannelShare channelShare;
+    private UserNatBTPChannel userNatBTPChannel;
 
     public AcceptNatBTPInboundHandler(ChannelShare channelShare) {
         this.channelShare = channelShare;
+        userNatBTPChannel = new UserNatBTPChannel(null, null, channelShare);
     }
-
-    private UserNatBTPChannel userNatBTPChannel = new UserNatBTPChannel(null, null);
 
     private UserNatBTPChannel.NatBTPChannel flushNatBTPChannel(Channel channel) {
         return userNatBTPChannel.flushNatBTPChannel(channel);
@@ -72,11 +72,13 @@ public class AcceptNatBTPInboundHandler extends SimpleChannelUpstreamHandler {
         userNatBTPChannel.realChannelConnected();
     }
 
-    private void msgNatRegisterBTP(UserNatBTPChannel.NatBTPChannel userNatBTPChannel, HeartMsg msg0) {
+    private void msgNatRegisterBTP(UserNatBTPChannel.NatBTPChannel natBTPChannel, HeartMsg msg0) {
         HeartMsg.NatRegisterBTPChannel natRegisterBTPChannel
             = msg0.asSubNatRegisterBTPChannel();
-        LOGGER.debug("msgNatRegisterBTP,AcptUserPort:{}", natRegisterBTPChannel.getAcptUserPort());
-        channelShare.putNatBTPChannel(userNatBTPChannel.getUserNatBTPChannel(), natRegisterBTPChannel.getAcptUserPort());
+        int acptUserPort = natRegisterBTPChannel.getAcptUserPort();
+        LOGGER.debug("msgNatRegisterBTP,AcptUserPort:{}", acptUserPort);
+        natBTPChannel.setAcptUserPort(acptUserPort);
+        channelShare.putNatBTPChannel(natBTPChannel.getUserNatBTPChannel(), acptUserPort);
     }
 
     @Override
