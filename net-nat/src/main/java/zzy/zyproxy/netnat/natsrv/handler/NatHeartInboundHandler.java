@@ -32,25 +32,24 @@ public class NatHeartInboundHandler extends SimpleChannelUpstreamHandler {
         this.acptUserAddr = acptUserAddr;
     }
 
-    private NatHeartChannel getLanHeartChannel(Channel channel) {
-        return (NatHeartChannel) natHeartChannel.getHeartByChannel(channel);
+    private NatHeartChannel flushLanHeartChannel(Channel channel) {
+        return natHeartChannel.flushChannel(channel);
     }
 
     @Override
     public void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-        getLanHeartChannel(ctx.getChannel()).writeRegisterLanHeart(acptUserAddr);
+        flushLanHeartChannel(ctx.getChannel()).writeRegisterLanHeart(acptUserAddr);
     }
 
     @Override
     public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
-        Object message0 = e.getMessage();
         Object message = e.getMessage();
         if (!(message instanceof HeartMsg)) {
             super.messageReceived(ctx, e);
             return;
         }
-        NatHeartChannel natHeartChannel = getLanHeartChannel(ctx.getChannel());
-        HeartMsg msg0 = (HeartMsg) message0;
+        NatHeartChannel natHeartChannel = flushLanHeartChannel(ctx.getChannel());
+        HeartMsg msg0 = (HeartMsg) message;
         if (msg0.isPong()) {
             msgPong(natHeartChannel, msg0);
         }
@@ -65,7 +64,7 @@ public class NatHeartInboundHandler extends SimpleChannelUpstreamHandler {
             public void operationComplete(ChannelFuture future) throws Exception {
                 if (future.isSuccess()) {
                     LOGGER.debug("msgNetRequestNewChannel#future.isSuccess");
-                    natHeartChannel.writeLanResponseNewChannel();
+                    natHeartChannel.writeNatResponseNewChannel();
                 }
             }
         });
@@ -78,7 +77,7 @@ public class NatHeartInboundHandler extends SimpleChannelUpstreamHandler {
 
     @Override
     public void handleUpstream(ChannelHandlerContext ctx, ChannelEvent e) throws Exception {
-        getLanHeartChannel(ctx.getChannel());
+        flushLanHeartChannel(ctx.getChannel());
         if (e instanceof IdleStateEvent) {
             channelIdle(ctx, (IdleStateEvent) e);
         }
@@ -95,7 +94,7 @@ public class NatHeartInboundHandler extends SimpleChannelUpstreamHandler {
                 return;
             }
             LOGGER.debug("LAN端，心跳检测，长时间没有{}@{}", state, ctx.getChannel());
-            getLanHeartChannel(ctx.getChannel()).writePing();
+            flushLanHeartChannel(ctx.getChannel()).writePing();
         }
     }
 }

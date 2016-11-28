@@ -18,7 +18,7 @@ public class App {
         final InetSocketAddress acptBackAddr = new InetSocketAddress("127.0.0.1", 8856);
         final InetSocketAddress acptUserAddr = new InetSocketAddress("127.0.0.1", 3307);
 
-        final InetSocketAddress lanRealAddr = new InetSocketAddress("127.0.0.1", 3306);
+        final InetSocketAddress natRealAddr = new InetSocketAddress("127.0.0.1", 3306);
         final ChannelShare channelShare = new ChannelShare();
         final int allIdleTimeSeconds = 100 * 60;
 
@@ -48,7 +48,7 @@ public class App {
                         acptHeartAddr,
                         acptUserAddr,
                         acptBackAddr,
-                        lanRealAddr,
+                        natRealAddr,
                         (int) (allIdleTimeSeconds * 0.8f));
                 natHeartClient.start();
             }

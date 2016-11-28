@@ -23,8 +23,8 @@ public class AcceptHeartInboundHandler extends SimpleChannelUpstreamHandler {
         this.channelShare = channelShare;
     }
 
-    private NetHeartChannel getNetHeartChannel(Channel channel) {
-        return (NetHeartChannel) netHeartChannel.getHeartByChannel(channel);
+    private NetHeartChannel flushNetHeartChannel(Channel channel) {
+        return netHeartChannel.flushChannel(channel);
     }
 
     @Override
@@ -42,20 +42,20 @@ public class AcceptHeartInboundHandler extends SimpleChannelUpstreamHandler {
         //------
         HeartMsg msg0 = (HeartMsg) message;
         Channel channel = ctx.getChannel();
-        NetHeartChannel netHeartChannel = getNetHeartChannel(channel);
+        NetHeartChannel netHeartChannel = flushNetHeartChannel(channel);
         if (msg0.isPing()) {
             msgPing(netHeartChannel, msg0);
         }
         if (msg0.isNatRegisterHeart()) {
             msgRegisterLanHeart(netHeartChannel,msg0);
         }
-        if (msg0.isLanResponseBTPChannel()) {
+        if (msg0.isNatResponseBTPChannel()) {
             msgLanResponseNewChannel(netHeartChannel,msg0);
         }
     }
 
     private void msgLanResponseNewChannel(NetHeartChannel netHeartChannel, HeartMsg msg0) {
-        HeartMsg.LanResponseBTPChannel lanResponseBTPChannel = msg0.asSubLanResponseBTPChannel();
+        HeartMsg.NatResponseBTPChannel natResponseBTPChannel = msg0.asSubNatResponseBTPChannel();
 
     }
 

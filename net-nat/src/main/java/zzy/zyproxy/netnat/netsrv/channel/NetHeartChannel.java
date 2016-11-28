@@ -9,22 +9,16 @@ import zzy.zyproxy.netnat.channel.HeartChannel;
  * @author zhouzhongyuan
  * @date 2016/11/27
  */
-public class NetHeartChannel extends HeartChannel {
+public class NetHeartChannel extends HeartChannel<NetHeartChannel> {
 
 
     public NetHeartChannel(Channel channel) {
         super(channel);
     }
 
-    public HeartChannel getHeartByChannel(Channel channel) {
-        if (this.channel == null) {
-            this.channel = channel;
-            return this;
-        }
-        if (this.channel.equals(channel)) {
-            return this;
-        }
-        return new NetHeartChannel(channel);
+    public NetHeartChannel flushChannel(Channel channel) {
+        super.flushChannel0(channel);
+        return this;
     }
 
     public ChannelFuture writePong() {

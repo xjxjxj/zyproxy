@@ -5,7 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import zzy.zyproxy.core.packet.heart.HeartMsg;
 import zzy.zyproxy.netnat.netsrv.ChannelShare;
-import zzy.zyproxy.netnat.netsrv.channel.NatBTPChannel;
+import zzy.zyproxy.netnat.netsrv.channel.UserNatBTPChannel;
 
 /**
  * @author zhouzhongyuan
@@ -20,10 +20,10 @@ public class AcceptNatBTPInboundHandler extends SimpleChannelUpstreamHandler {
         this.channelShare = channelShare;
     }
 
-    private NatBTPChannel natBTPChannel = new NatBTPChannel(null);
+    private UserNatBTPChannel userNatBTPChannel = new UserNatBTPChannel(null, null);
 
-    private NatBTPChannel getNatChannel(Channel channel) {
-        return (NatBTPChannel) natBTPChannel.getHeartByChannel(channel);
+    private UserNatBTPChannel.NatBTPChannel flushNatBTPChannel(Channel channel) {
+        return userNatBTPChannel.flushNatBTPChannel(channel);
     }
 
     @Override
@@ -36,17 +36,17 @@ public class AcceptNatBTPInboundHandler extends SimpleChannelUpstreamHandler {
         //------
         HeartMsg msg0 = (HeartMsg) message;
         Channel channel = ctx.getChannel();
-        NatBTPChannel natBTPChannel = getNatChannel(channel);
+        flushNatBTPChannel(channel);
         if (msg0.isNatRegisterBTPChannel()) {
-            msgNatRegisterBTP(natBTPChannel, msg0);
+            msgNatRegisterBTP(userNatBTPChannel, msg0);
         }
     }
 
-    private void msgNatRegisterBTP(NatBTPChannel natBTPChannel, HeartMsg msg0) {
+    private void msgNatRegisterBTP(UserNatBTPChannel userNatBTPChannel, HeartMsg msg0) {
         HeartMsg.NatRegisterBTPChannel natRegisterBTPChannel
-                = msg0.asSubNatRegisterBTPChannel();
+            = msg0.asSubNatRegisterBTPChannel();
         LOGGER.debug("msgNatRegisterBTP,AcptUserPort:{}", natRegisterBTPChannel.getAcptUserPort());
-        channelShare.putNatBTPChannel(natBTPChannel, natRegisterBTPChannel.getAcptUserPort());
+        channelShare.putNatBTPChannel(userNatBTPChannel, natRegisterBTPChannel.getAcptUserPort());
     }
 
     @Override
@@ -56,6 +56,7 @@ public class AcceptNatBTPInboundHandler extends SimpleChannelUpstreamHandler {
 
     @Override
     public void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+        LOGGER.debug("channelConnected");
     }
 
     @Override

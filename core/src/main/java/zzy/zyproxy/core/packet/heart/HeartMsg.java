@@ -125,18 +125,18 @@ public class HeartMsg implements Packet {
     //############[===========]############//
     private static final int NAT_RESPONSE_BTP_CHANNEL = 0x005a;
 
-    public class LanResponseBTPChannel extends HeartBody {
+    public class NatResponseBTPChannel extends HeartBody {
         protected void setOuterHeartType() {
             HEART_TYPE = NAT_RESPONSE_BTP_CHANNEL;
         }
     }
 
-    public boolean isLanResponseBTPChannel() {
+    public boolean isNatResponseBTPChannel() {
         return NAT_RESPONSE_BTP_CHANNEL == HEART_TYPE;
     }
 
-    public LanResponseBTPChannel asSubLanResponseBTPChannel() {
-        return new LanResponseBTPChannel();
+    public NatResponseBTPChannel asSubNatResponseBTPChannel() {
+        return new NatResponseBTPChannel();
     }
 
     //############[========== ]############//
@@ -201,12 +201,50 @@ public class HeartMsg implements Packet {
         return new UserWriteToNatBTP();
     }
 
+    //############[========== ]############//
+    //############[用户发送信息传送到后端服务]############//
+    //############[===========]############//
+    private static final int USER_CHANNEL_CONNECTED = 0x008a;
+
+    public class UserChannelConnected extends HeartBody {
+        protected void setOuterHeartType() {
+            HEART_TYPE = USER_CHANNEL_CONNECTED;
+        }
+    }
+
+    public boolean isUserChannelConnected() {
+        return USER_CHANNEL_CONNECTED == HEART_TYPE;
+    }
+
+    public UserChannelConnected asSubUserChannelConnected() {
+        return new UserChannelConnected();
+    }
+
+    //############[========== ]############//
+    //############[用户发送信息传送到后端服务]############//
+    //############[===========]############//
+    private static final int REAL_CHANNEL_CONNECTED = 0x009a;
+
+    public class RealChannelConnected extends HeartBody {
+        protected void setOuterHeartType() {
+            HEART_TYPE = REAL_CHANNEL_CONNECTED;
+        }
+    }
+
+    public boolean isRealChannelConnected() {
+        return REAL_CHANNEL_CONNECTED == HEART_TYPE;
+    }
+
+    public RealChannelConnected asSubRealChannelConnected() {
+        return new RealChannelConnected();
+    }
+
     ////-------------------
     @Override
     public String toString() {
         return new ToStringBuilder(this)
-                .append("HEART_TYPE", HEART_TYPE)
-                .append("netUserAcptPort", netUserAcptPort)
-                .toString();
+            .append("HEART_TYPE", HEART_TYPE)
+            .append("netUserAcptPort", netUserAcptPort)
+            .toString();
     }
 }

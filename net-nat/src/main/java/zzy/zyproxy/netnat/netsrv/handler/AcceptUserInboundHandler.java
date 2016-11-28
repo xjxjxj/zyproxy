@@ -19,6 +19,8 @@ public class AcceptUserInboundHandler extends SimpleChannelUpstreamHandler {
     private final ChannelShare channelShare;
     private UserNatBTPChannel userNatBTPChannel;
 
+    private Runnable channelConnectedTask;
+
     public AcceptUserInboundHandler(ChannelShare channelShare) {
         this.channelShare = channelShare;
     }
@@ -35,15 +37,22 @@ public class AcceptUserInboundHandler extends SimpleChannelUpstreamHandler {
                 SocketAddress localAddress = channel.getLocalAddress();
                 if (localAddress instanceof InetSocketAddress) {
                     InetSocketAddress localAdd = (InetSocketAddress) localAddress;
-                    channelShare.takeUserToNatChannel(channel, localAdd, new ChannelShare.takeUserToNatChannelCallable() {
-                        public void call(UserNatBTPChannel userNatBTPChannel0) {
-                            channel.setReadable(true);
-                            if (userNatBTPChannel0 == null) {
-                                channel.close();
+                    channelShare.takeUserToNatChannel(localAdd,
+                        new ChannelShare.takeUserToNatChannelCallable() {
+                            public void call(UserNatBTPChannel userNatBTPChannel0) {
+                                if (userNatBTPChannel0 == null) {
+                                    channel.close();
+                                    return;
+                                }
+                                userNatBTPChannel = userNatBTPChannel0;
+                                userNatBTPChannel.flushUserChannel(channel);
+                                if (channelConnectedTask != null) {
+                                    channelConnectedTask.run();
+                                    channel.setReadable(true);
+                                }
                             }
-                            userNatBTPChannel = userNatBTPChannel0;
                         }
-                    });
+                    );
                 }
             }
         });
@@ -61,16 +70,18 @@ public class AcceptUserInboundHandler extends SimpleChannelUpstreamHandler {
         byte[] bytes = new byte[buffer.readableBytes()];
         buffer.readBytes(bytes);
         channel.setReadable(false);
-        userNatBTPChannel.userWriteToNatBTP(bytes).addListener(new ChannelFutureListener() {
-            public void operationComplete(ChannelFuture channelFuture) throws Exception {
-                if (channelFuture.isSuccess()) {
-                    channel.setReadable(true);
-                } else {
-                    channel.close();
+        userNatBTPChannel
+            .flushUserChannel(channel)
+            .writeToNatBTP(bytes)
+            .addListener(new ChannelFutureListener() {
+                public void operationComplete(ChannelFuture channelFuture) throws Exception {
+                    if (channelFuture.isSuccess()) {
+                        channel.setReadable(true);
+                    } else {
+                        userNatBTPChannel.close();
+                    }
                 }
-            }
-        });
-        LOGGER.debug("messageReceived");
+            });
     }
 
     @Override
@@ -89,8 +100,36 @@ public class AcceptUserInboundHandler extends SimpleChannelUpstreamHandler {
     }
 
     @Override
-    public void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-        LOGGER.debug("channelConnected");
+    public void channelConnected(final ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+        final Channel channel = ctx.getChannel();
+        final Runnable runnable = new Runnable() {
+            public void run() {
+                try {
+                    if (userNatBTPChannel != null) {
+                        channel.setReadable(false);
+                        UserNatBTPChannel.UserChannel userChannel = userNatBTPChannel.flushUserChannel(channel);
+                        userChannel
+                            .channelConnected()
+                            .addListener(new ChannelFutureListener() {
+                                public void operationComplete(ChannelFuture future) throws Exception {
+                                    if (future.isSuccess()) {
+                                        channel.setReadable(true);
+                                    } else {
+                                        userNatBTPChannel.close();
+                                    }
+                                }
+                            });
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+        if (userNatBTPChannel != null) {
+            runnable.run();
+        } else {
+            channelConnectedTask = runnable;
+        }
     }
 
     @Override

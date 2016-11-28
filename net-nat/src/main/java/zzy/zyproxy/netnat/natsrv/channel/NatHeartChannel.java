@@ -11,21 +11,15 @@ import java.net.InetSocketAddress;
  * @author zhouzhongyuan
  * @date 2016/11/27
  */
-public class NatHeartChannel extends HeartChannel {
+public class NatHeartChannel extends HeartChannel<NatHeartChannel> {
 
     public NatHeartChannel(Channel channel) {
         super(channel);
     }
 
-    public HeartChannel getHeartByChannel(Channel channel) {
-        if (this.channel == null){
-            this.channel = channel;
-            return this;
-        }
-        if (this.channel.equals(channel)) {
-            return this;
-        }
-        return new NatHeartChannel(channel);
+    public NatHeartChannel flushChannel(Channel channel) {
+        super.flushChannel0(channel);
+        return this;
     }
 
     public ChannelFuture writeRegisterLanHeart(InetSocketAddress lanProxyAddr) {
@@ -33,11 +27,13 @@ public class NatHeartChannel extends HeartChannel {
         heartMsg.setHeartBody(heartMsg.new NatRegisterHeart().setNetAcptUserPort(lanProxyAddr.getPort()));
         return channel.write(heartMsg);
     }
-    public ChannelFuture writeLanResponseNewChannel() {
+
+    public ChannelFuture writeNatResponseNewChannel() {
         HeartMsg heartMsg = new HeartMsg();
-        heartMsg.setHeartBody(heartMsg.new LanResponseBTPChannel());
+        heartMsg.setHeartBody(heartMsg.new NatResponseBTPChannel());
         return channel.write(heartMsg);
     }
+
     public ChannelFuture writePing() {
         HeartMsg msg = new HeartMsg();
         msg.setHeartBody(msg.new Ping());

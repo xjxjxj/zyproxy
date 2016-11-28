@@ -29,13 +29,13 @@ public final class NatHeartClient {
     private NatBTPClientFactory natBTPClientFactory;
 
     public NatHeartClient(InetSocketAddress acptHeartAddr, InetSocketAddress acptUserAddr,
-                          InetSocketAddress acptBackAddr, InetSocketAddress lanRealAddr,
+                          InetSocketAddress acptBackAddr, InetSocketAddress natRealAddr,
                           int allIdleTimeSeconds) {
         this.acptHeartAddr = acptHeartAddr;
         this.acptUserAddr = acptUserAddr;
         this.allIdleTimeSeconds = allIdleTimeSeconds;
 
-        RealClientFactory realClientFactory = new RealClientFactory(lanRealAddr);
+        RealClientFactory realClientFactory = new RealClientFactory(natRealAddr);
         this.natBTPClientFactory = new NatBTPClientFactory(acptBackAddr,acptUserAddr, realClientFactory);
     }
 

@@ -3,7 +3,6 @@ package zzy.zyproxy.netnat.netsrv;
 import org.jboss.netty.channel.Channel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import zzy.zyproxy.netnat.netsrv.channel.NatBTPChannel;
 import zzy.zyproxy.netnat.netsrv.channel.NetHeartChannel;
 import zzy.zyproxy.netnat.netsrv.channel.UserNatBTPChannel;
 
@@ -19,22 +18,22 @@ public class ChannelShare {
     private final static Logger LOGGER = LoggerFactory.getLogger(ChannelShare.class);
 
     //############[============]############//
-    //############[backChannels]############//
+    //############[UserNatChannelMap]############//
     //############[============]############//
     private final ExecutorService taskExecutor = Executors.newCachedThreadPool();
 
-    private volatile HashMap<String, BlockingQueue<NatBTPChannel>> backChannelMap
-            = new HashMap<String, BlockingQueue<NatBTPChannel>>();
+    private volatile HashMap<String, BlockingQueue<UserNatBTPChannel>> userNatChannelMap
+        = new HashMap<String, BlockingQueue<UserNatBTPChannel>>();
 
-    public void putNatBTPChannel(final NatBTPChannel natBTPChannel, final int acptUserPort) {
-        final BlockingQueue<NatBTPChannel> natBTPChannels = backChannelMap.get(String.valueOf(acptUserPort));
+    public void putNatBTPChannel(final UserNatBTPChannel userNatBTPChannel, final int acptUserPort) {
+        final BlockingQueue<UserNatBTPChannel> natBTPChannels = userNatChannelMap.get(String.valueOf(acptUserPort));
         taskExecutor.submit(new Runnable() {
             public void run() {
                 try {
-                    natBTPChannels.put(natBTPChannel);
+                    natBTPChannels.put(userNatBTPChannel);
                     LOGGER.debug("putNatBTPChannel success,acptUserPort:{}", acptUserPort);
                 } catch (Exception e) {
-                    natBTPChannel.close();
+                    userNatBTPChannel.close();
                     e.printStackTrace();
                 }
             }
@@ -45,8 +44,7 @@ public class ChannelShare {
         void call(UserNatBTPChannel userNatBTPChannel);
     }
 
-    public void takeUserToNatChannel(final Channel acptUserchannel,
-                                     final InetSocketAddress localAdd,
+    public void takeUserToNatChannel(final InetSocketAddress localAdd,
                                      final takeUserToNatChannelCallable callable) {
         Runnable userToNatTask = new Runnable() {
             public void run() {
@@ -54,21 +52,17 @@ public class ChannelShare {
                 try {
                     LOGGER.debug("takeUserToNatChannel#run");
                     int port = localAdd.getPort();
-                    BlockingQueue<NatBTPChannel> channels = backChannelMap.get(String.valueOf(port));
+                    BlockingQueue<UserNatBTPChannel> channels = userNatChannelMap.get(String.valueOf(port));
                     if (channels == null) {
                         throw new RuntimeException("不能找到[" + port + "]端口对应的后端服务");
                     }
-                    NatBTPChannel lanToBackChannel = null;
                     try {
-                        lanToBackChannel = channels.poll(1, TimeUnit.SECONDS);
-                        LOGGER.debug("直接从channelPool中取得了backchannel:{}@port:{}", lanToBackChannel, port);
+                        userNatBTPChannel = channels.poll(1, TimeUnit.SECONDS);
+                        LOGGER.debug("直接从channelPool中取得了backchannel:{}@port:{}", userNatBTPChannel, port);
                     } finally {
-                        if (lanToBackChannel == null) {
+                        if (userNatBTPChannel == null) {
                             takeNatChannelFromRemoteAtPort(port);
-                            lanToBackChannel = channels.poll(10, TimeUnit.SECONDS);
-                        }
-                        if (lanToBackChannel != null) {
-                            userNatBTPChannel = new UserNatBTPChannel(acptUserchannel, lanToBackChannel);
+                            userNatBTPChannel = channels.poll(10, TimeUnit.SECONDS);
                         }
                     }
                 } catch (Exception e) {
@@ -90,7 +84,7 @@ public class ChannelShare {
      * 用来注册Tcp的端口 排除80和443
      */
     private volatile ConcurrentHashMap<Integer, NetHeartChannel> natPortRegister
-            = new ConcurrentHashMap<Integer, NetHeartChannel>();
+        = new ConcurrentHashMap<Integer, NetHeartChannel>();
 
     public void putNewHeartChannel(NetHeartChannel netHeartChannel, Integer netUserProxyPort) {
         if (netUserProxyPort == null) {
@@ -99,7 +93,7 @@ public class ChannelShare {
         NetHeartChannel netHeartChannelReg = natPortRegister.get(netUserProxyPort);
         if (netHeartChannelReg == null || !netHeartChannelReg.isConnected()) {
             natPortRegister.put(netUserProxyPort, netHeartChannel);
-            backChannelMap.put(netUserProxyPort.toString(), new LinkedBlockingQueue<NatBTPChannel>());
+            userNatChannelMap.put(netUserProxyPort.toString(), new LinkedBlockingQueue<UserNatBTPChannel>());
         }
         LOGGER.debug("后台Heart连接池putNewHeartChannel,@NetUserProxyPort:{}", netUserProxyPort);
     }
