@@ -50,22 +50,26 @@ public class AcceptNatBTPInboundHandler extends SimpleChannelUpstreamHandler {
                 = msg0.asSubRealWriteToNatBTP();
             msgRealWriteToNatBTP(natBTPChannel, realWriteToNatBTP);
         }
+        if (msg0.isRealChannelClosed()) {
+            HeartMsg.RealChannelClosed realChannelClosed
+                = msg0.asSubRealChannelClosed();
+            msgRealChannelClosed(natBTPChannel, realChannelClosed);
+        }
+    }
+
+    private void msgRealChannelClosed(UserNatBTPChannel.NatBTPChannel natBTPChannel, HeartMsg.RealChannelClosed realChannelClosed) {
+        LOGGER.debug("msgRealChannelClosed");
+        natBTPChannel.realChannelClosed();
     }
 
     private void msgRealWriteToNatBTP(final UserNatBTPChannel.NatBTPChannel userNatBTPChannel, HeartMsg.RealWriteToNatBTP realWriteToNatBTP) {
         LOGGER.debug("msgRealWriteToNatBTP");
-        userNatBTPChannel.writeToUser(realWriteToNatBTP.getMsgBody()).addListener(new ChannelFutureListener() {
-            public void operationComplete(ChannelFuture future) throws Exception {
-                LOGGER.debug("msgRealWriteToNatBTP isSuccess:{},{},{}", future.isSuccess(),
-                    userNatBTPChannel.getUserNatBTPChannel().getUserchannel().getChannel().isReadable(),
-                    userNatBTPChannel.getUserNatBTPChannel().getUserchannel().getChannel().isWritable());
-            }
-        });
+        userNatBTPChannel.writeToUser(realWriteToNatBTP.getMsgBody());
     }
 
     private void msgRealChannelConnected(UserNatBTPChannel.NatBTPChannel userNatBTPChannel, HeartMsg.RealChannelConnected realChannelConnected) {
         LOGGER.debug("msgRealChannelConnected");
-        userNatBTPChannel.runStatusTask(UserNatBTPChannel.ChannelStatus.CONNECTED);
+        userNatBTPChannel.realChannelConnected();
     }
 
     private void msgNatRegisterBTP(UserNatBTPChannel.NatBTPChannel userNatBTPChannel, HeartMsg msg0) {
@@ -77,12 +81,12 @@ public class AcceptNatBTPInboundHandler extends SimpleChannelUpstreamHandler {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
-        super.exceptionCaught(ctx, e);
+        LOGGER.warn("{}", e);
     }
 
     @Override
     public void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-        LOGGER.debug("channelConnected");
+        LOGGER.debug("writeChannelConnected");
     }
 
     @Override

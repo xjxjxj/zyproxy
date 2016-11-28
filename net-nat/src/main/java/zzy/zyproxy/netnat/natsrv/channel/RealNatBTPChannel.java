@@ -69,6 +69,10 @@ public class RealNatBTPChannel {
             ChannelBuffer buffer = channel.getConfig().getBufferFactory().getBuffer(msgBody, 0, msgBody.length);
             return channel.write(buffer);
         }
+
+        public ChannelFuture writeToNatBTPchannelClosed() {
+            return natBTPChannel.writeRealChannelClosed();
+        }
     }
 
     public class NatBTPChannel extends HeartChannel<NatBTPChannel> {
@@ -104,6 +108,16 @@ public class RealNatBTPChannel {
 
         public ChannelFuture writeToReal(byte[] msgBody) {
             return realChannel.writeMsgBody(msgBody);
+        }
+
+        public ChannelFuture writeRealChannelClosed() {
+            HeartMsg msg = new HeartMsg();
+            msg.setHeartBody(msg.new RealChannelClosed());
+            return channel.write(msg);
+        }
+
+        public ChannelFuture userChannelClosed() {
+            return realChannel.disconnect();
         }
     }
 }

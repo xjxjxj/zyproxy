@@ -29,7 +29,7 @@ public class AcceptHeartInboundHandler extends SimpleChannelUpstreamHandler {
 
     @Override
     public void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-        LOGGER.info("channelConnected@{}", ctx.getChannel());
+        LOGGER.info("writeChannelConnected@{}", ctx.getChannel());
     }
 
     @Override

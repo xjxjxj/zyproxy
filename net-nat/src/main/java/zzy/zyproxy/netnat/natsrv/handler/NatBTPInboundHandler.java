@@ -54,6 +54,15 @@ public class NatBTPInboundHandler extends SimpleChannelUpstreamHandler {
             HeartMsg.UserWriteToNatBTP userWriteToNatBTP = msg0.asSubUserWriteToNatBTP();
             msgUserWriteToNatBTP(natBTPChannel, userWriteToNatBTP);
         }
+        if (msg0.isUserChannelClosed()) {
+            HeartMsg.UserChannelClosed userChannelClosed = msg0.asSubUserChannelClosed();
+            msgRealChannelClosed(natBTPChannel, userChannelClosed);
+        }
+    }
+
+    private void msgRealChannelClosed(RealNatBTPChannel.NatBTPChannel natBTPChannel, HeartMsg.UserChannelClosed userChannelClosed) {
+        LOGGER.debug("msgRealChannelClosed");
+        natBTPChannel.userChannelClosed();
     }
 
     private void msgUserWriteToNatBTP(RealNatBTPChannel.NatBTPChannel natBTPChannel, HeartMsg.UserWriteToNatBTP userWriteToNatBTP) {
@@ -71,7 +80,7 @@ public class NatBTPInboundHandler extends SimpleChannelUpstreamHandler {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
-        super.exceptionCaught(ctx, e);
+        LOGGER.warn("{}", e);
     }
 
     @Override

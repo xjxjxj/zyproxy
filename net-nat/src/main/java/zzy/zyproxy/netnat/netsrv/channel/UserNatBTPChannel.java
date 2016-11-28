@@ -59,8 +59,8 @@ public class UserNatBTPChannel {
     }
 
     public void close() {
-        userchannel.close();
-        natBTPChannel.close();
+        userchannel.disconnect();
+        natBTPChannel.disconnect();
     }
 
     public class UserChannel extends ProxyChannel<UserChannel> {
@@ -80,7 +80,7 @@ public class UserNatBTPChannel {
             return natBTPChannel.write(msg);
         }
 
-        public ChannelFuture channelConnected(Runnable callback) {
+        public ChannelFuture writeChannelConnected(Runnable callback) {
             channelTask.put(ChannelStatus.CONNECTED, callback);
             HeartMsg msg = new HeartMsg();
             msg.setHeartBody(msg.new UserChannelConnected());
@@ -90,6 +90,10 @@ public class UserNatBTPChannel {
         public ChannelFuture writeMsgBody(byte[] msgBody) {
             ChannelBuffer buffer = channel.getConfig().getBufferFactory().getBuffer(msgBody, 0, msgBody.length);
             return channel.write(buffer);
+        }
+
+        public ChannelFuture writeUserChannelClosed() {
+            return natBTPChannel.writeUserChannelClosed();
         }
     }
 
@@ -112,8 +116,8 @@ public class UserNatBTPChannel {
             return UserNatBTPChannel.this;
         }
 
-        public void runStatusTask(ChannelStatus status) {
-            Runnable runnable = channelTask.get(status);
+        public void realChannelConnected() {
+            Runnable runnable = channelTask.get(UserNatBTPChannel.ChannelStatus.CONNECTED);
             if (runnable != null) {
                 runnable.run();
             }
@@ -121,6 +125,16 @@ public class UserNatBTPChannel {
 
         public ChannelFuture writeToUser(byte[] msgBody) {
             return userchannel.writeMsgBody(msgBody);
+        }
+
+        public ChannelFuture realChannelClosed() {
+            return userchannel.disconnect();
+        }
+
+        public ChannelFuture writeUserChannelClosed() {
+            HeartMsg msg = new HeartMsg();
+            msg.setHeartBody(msg.new UserChannelClosed());
+            return channel.write(msg);
         }
     }
 

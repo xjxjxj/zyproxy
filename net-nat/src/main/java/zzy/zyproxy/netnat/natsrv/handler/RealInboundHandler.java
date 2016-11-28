@@ -6,8 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import zzy.zyproxy.netnat.natsrv.channel.RealNatBTPChannel;
 
-import java.util.concurrent.TimeUnit;
-
 /**
  * @author zhouzhongyuan
  * @date 2016/11/27
@@ -26,7 +24,6 @@ public class RealInboundHandler extends SimpleChannelUpstreamHandler {
         final Channel channel = ctx.getChannel();
         realNatBTPChannel.flushRealChannel(channel);
         channel.setReadable(false);
-
     }
 
     @Override
@@ -37,10 +34,12 @@ public class RealInboundHandler extends SimpleChannelUpstreamHandler {
             .writeRealChannelConnected()
             .addListener(new ChannelFutureListener() {
                 public void operationComplete(ChannelFuture future) throws Exception {
-                    if (future.isSuccess()) {
-                        LOGGER.debug("channelConnected & setReadable true");
-                        channel.setReadable(true);
+                    if (!future.isSuccess()) {
+                        channel.close();
+                        return;
                     }
+                    LOGGER.debug("writeChannelConnected & setReadable true");
+                    channel.setReadable(true);
                 }
             });
         LOGGER.debug("channelOpen & setReadable false,remote address:{}", channel.getRemoteAddress());
@@ -72,5 +71,17 @@ public class RealInboundHandler extends SimpleChannelUpstreamHandler {
                     }
                 }
             });
+    }
+
+    @Override
+    public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+        realNatBTPChannel
+            .flushRealChannel(ctx.getChannel())
+            .writeToNatBTPchannelClosed();
+    }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
+        LOGGER.warn("{}", e);
     }
 }

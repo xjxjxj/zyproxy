@@ -34,26 +34,29 @@ public class AcceptUserInboundHandler extends SimpleChannelUpstreamHandler {
                     if (!future.isSuccess()) {
                         LOGGER.debug("channel.setReadable(false)#isSuccess");
                         channel.close();
+                        return;
                     }
                     SocketAddress localAddress = channel.getLocalAddress();
-                    if (localAddress instanceof InetSocketAddress) {
-                        InetSocketAddress localAdd = (InetSocketAddress) localAddress;
-                        channelShare.takeUserToNatChannel(localAdd,
-                            new ChannelShare.takeUserToNatChannelCallable() {
-                                public void call(UserNatBTPChannel userNatBTPChannel0) {
-                                    if (userNatBTPChannel0 == null) {
-                                        channel.close();
-                                        return;
-                                    }
-                                    userNatBTPChannel = userNatBTPChannel0;
-                                    userNatBTPChannel.flushUserChannel(channel);
-                                    if (channelConnectedTask != null) {
-                                        channelConnectedTask.run();
-                                    }
+                    if (!(localAddress instanceof InetSocketAddress)) {
+                        channel.close();
+                        return;
+                    }
+                    InetSocketAddress localAdd = (InetSocketAddress) localAddress;
+                    channelShare.takeUserToNatChannel(localAdd,
+                        new ChannelShare.takeUserToNatChannelCallable() {
+                            public void call(UserNatBTPChannel userNatBTPChannel0) {
+                                if (userNatBTPChannel0 == null) {
+                                    channel.close();
+                                    return;
+                                }
+                                userNatBTPChannel = userNatBTPChannel0;
+                                userNatBTPChannel.flushUserChannel(channel);
+                                if (channelConnectedTask != null) {
+                                    channelConnectedTask.run();
                                 }
                             }
-                        );
-                    }
+                        }
+                    );
                 }
             });
     }
@@ -65,15 +68,16 @@ public class AcceptUserInboundHandler extends SimpleChannelUpstreamHandler {
             public void run() {
                 try {
                     if (userNatBTPChannel == null) {
+                        channel.close();
                         return;
                     }
                     UserNatBTPChannel.UserChannel userChannel
                         = userNatBTPChannel.flushUserChannel(channel);
-                    LOGGER.debug("channelConnected#runable");
-                    userChannel.channelConnected(new Runnable() {
+                    LOGGER.debug("UserChannelwriteChannelConnected#runable");
+                    userChannel.writeChannelConnected(new Runnable() {
                         public void run() {
                             try {
-                                LOGGER.debug("channelConnected#runable#channelConnected call back and setReadable true");
+                                LOGGER.debug("UserChannelwriteChannelConnected#runable#writeChannelConnected call back and setReadable true");
                                 channel.setReadable(true);
                             } catch (Exception e) {
                                 e.printStackTrace();
@@ -121,20 +125,11 @@ public class AcceptUserInboundHandler extends SimpleChannelUpstreamHandler {
     }
 
     @Override
-    public void channelUnbound(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-        LOGGER.debug("channelUnbound");
-    }
-
-    @Override
     public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-        LOGGER.debug("channelClosed");
+        LOGGER.debug("writeUserChannelClosed");
+        userNatBTPChannel.flushUserChannel(ctx.getChannel()).writeUserChannelClosed();
     }
 
-
-    @Override
-    public void channelDisconnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-        LOGGER.debug("channelDisconnected");
-    }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
