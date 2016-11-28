@@ -270,6 +270,44 @@ public class HeartMsg implements Packet {
         return new RealChannelConnected();
     }
 
+    //############[========== ]############//
+    //############[真实服务器断开连接信息]############//
+    //############[===========]############//
+    private static final int REAL_CHANNEL_CLOSED = 0x011a;
+
+    public class RealChannelClosed extends HeartBody {
+        protected void setOuterHeartType() {
+            HEART_TYPE = REAL_CHANNEL_CLOSED;
+        }
+    }
+
+    public boolean isRealChannelClosed() {
+        return REAL_CHANNEL_CLOSED == HEART_TYPE;
+    }
+
+    public RealChannelClosed asSubRealChannelClosed() {
+        return new RealChannelClosed();
+    }
+
+    //############[========== ]############//
+    //############[用户端断开连接]############//
+    //############[===========]############//
+    private static final int User_CHANNEL_CLOSED = 0x012a;
+
+    public class UserChannelClosed extends HeartBody {
+        protected void setOuterHeartType() {
+            HEART_TYPE = User_CHANNEL_CLOSED;
+        }
+    }
+
+    public boolean isUserChannelClosed() {
+        return User_CHANNEL_CLOSED == HEART_TYPE;
+    }
+
+    public UserChannelClosed asSubUserChannelClosed() {
+        return new UserChannelClosed();
+    }
+
     ////-------------------
     @Override
     public String toString() {

@@ -2,6 +2,7 @@ package zzy.zyproxy.core.channel;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.ChannelFuture;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -22,8 +23,8 @@ public abstract class ProxyChannel<T> {
         this.channel = channel;
     }
 
-    public void close() {
-        channel.close();
+    public ChannelFuture disconnect() {
+        return channel.disconnect();
     }
 
     public Channel getChannel() {
