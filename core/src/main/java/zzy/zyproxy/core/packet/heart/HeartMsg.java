@@ -171,7 +171,7 @@ public class HeartMsg implements Packet {
     }
 
     //############[========== ]############//
-    //############[用户发送信息传送到后端服务]############//
+    //############[用户发送信息]############//
     //############[===========]############//
     private static final int USER_WRITE_TO_NAT_BTP = 0x007a;
 
@@ -202,9 +202,40 @@ public class HeartMsg implements Packet {
     }
 
     //############[========== ]############//
-    //############[用户发送信息传送到后端服务]############//
+    //############[真实服务器发送信息]############//
     //############[===========]############//
-    private static final int USER_CHANNEL_CONNECTED = 0x008a;
+    private static final int REAL_WRITE_TO_NAT_BTP = 0x008a;
+
+    private byte[] realWriteToNatMsgBody;
+
+    public class RealWriteToNatBTP extends HeartBody {
+
+        protected void setOuterHeartType() {
+            HEART_TYPE = REAL_WRITE_TO_NAT_BTP;
+        }
+
+        public RealWriteToNatBTP setMsgBody(byte[] msgBody) {
+            realWriteToNatMsgBody = msgBody;
+            return this;
+        }
+
+        public byte[] getMsgBody() {
+            return realWriteToNatMsgBody;
+        }
+    }
+
+    public boolean isRealWriteToNatBTP() {
+        return REAL_WRITE_TO_NAT_BTP == HEART_TYPE;
+    }
+
+    public RealWriteToNatBTP asSubRealWriteToNatBTP() {
+        return new RealWriteToNatBTP();
+    }
+
+    //############[========== ]############//
+    //############[用户连接信息]############//
+    //############[===========]############//
+    private static final int USER_CHANNEL_CONNECTED = 0x009a;
 
     public class UserChannelConnected extends HeartBody {
         protected void setOuterHeartType() {
@@ -221,9 +252,9 @@ public class HeartMsg implements Packet {
     }
 
     //############[========== ]############//
-    //############[用户发送信息传送到后端服务]############//
+    //############[真实服务器连接信息]############//
     //############[===========]############//
-    private static final int REAL_CHANNEL_CONNECTED = 0x009a;
+    private static final int REAL_CHANNEL_CONNECTED = 0x010a;
 
     public class RealChannelConnected extends HeartBody {
         protected void setOuterHeartType() {

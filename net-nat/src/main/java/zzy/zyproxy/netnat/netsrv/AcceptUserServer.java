@@ -2,6 +2,8 @@ package zzy.zyproxy.netnat.netsrv;
 
 import org.jboss.netty.channel.*;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
+import org.jboss.netty.handler.logging.LoggingHandler;
+import org.jboss.netty.logging.InternalLogLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import zzy.zyproxy.core.server.AcceptServer;
@@ -34,7 +36,8 @@ public final class AcceptUserServer extends AcceptServer {
             public ChannelPipeline getPipeline() throws Exception {
                 ChannelPipeline pipeline = Channels.pipeline();
                 ChannelPiplineUtil.addLast(pipeline,
-                        new AcceptUserInboundHandler(channelShare));
+                    new LoggingHandler(InternalLogLevel.INFO),
+                    new AcceptUserInboundHandler(channelShare));
                 return pipeline;
             }
         };

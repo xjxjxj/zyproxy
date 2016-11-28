@@ -1,11 +1,14 @@
 package zzy.zyproxy.netnat.netsrv.channel;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
 import zzy.zyproxy.core.channel.ProxyChannel;
 import zzy.zyproxy.core.packet.heart.HeartMsg;
 import zzy.zyproxy.netnat.channel.HeartChannel;
+
+import java.util.HashMap;
 
 /**
  * @author zhouzhongyuan
@@ -14,6 +17,16 @@ import zzy.zyproxy.netnat.channel.HeartChannel;
 public class UserNatBTPChannel {
     private UserChannel userchannel;
     private NatBTPChannel natBTPChannel;
+
+
+    public enum ChannelStatus {
+        OPEN,
+        CONNECTED,
+        READ,
+        CLOSE;
+    }
+
+    private HashMap<ChannelStatus, Runnable> channelTask = new HashMap<ChannelStatus, Runnable>();
 
     public UserNatBTPChannel(Channel userchannel, Channel natBTPChannel) {
         this.userchannel = new UserChannel(userchannel);
@@ -34,6 +47,15 @@ public class UserNatBTPChannel {
         this.userchannel = flushUserChannel(userChannel);
         this.natBTPChannel = flushNatBTPChannel(natBTPChannel);
         return this;
+    }
+
+
+    public UserChannel getUserchannel() {
+        return userchannel;
+    }
+
+    public NatBTPChannel getNatBTPChannel() {
+        return natBTPChannel;
     }
 
     public void close() {
@@ -58,10 +80,16 @@ public class UserNatBTPChannel {
             return natBTPChannel.write(msg);
         }
 
-        public ChannelFuture channelConnected() {
+        public ChannelFuture channelConnected(Runnable callback) {
+            channelTask.put(ChannelStatus.CONNECTED, callback);
             HeartMsg msg = new HeartMsg();
             msg.setHeartBody(msg.new UserChannelConnected());
             return natBTPChannel.write(msg);
+        }
+
+        public ChannelFuture writeMsgBody(byte[] msgBody) {
+            ChannelBuffer buffer = channel.getConfig().getBufferFactory().getBuffer(msgBody, 0, msgBody.length);
+            return channel.write(buffer);
         }
     }
 
@@ -78,6 +106,21 @@ public class UserNatBTPChannel {
 
         public ChannelFuture write(HeartMsg msg) {
             return this.channel.write(msg);
+        }
+
+        public UserNatBTPChannel getUserNatBTPChannel() {
+            return UserNatBTPChannel.this;
+        }
+
+        public void runStatusTask(ChannelStatus status) {
+            Runnable runnable = channelTask.get(status);
+            if (runnable != null) {
+                runnable.run();
+            }
+        }
+
+        public ChannelFuture writeToUser(byte[] msgBody) {
+            return userchannel.writeMsgBody(msgBody);
         }
     }
 

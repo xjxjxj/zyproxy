@@ -39,14 +39,19 @@ public abstract class ProxyChannel<T> {
 
     @Override
     public int hashCode() {
-        return channel.hashCode();
+        if (channel != null) {
+            return channel.hashCode();
+        }
+        return super.hashCode();
     }
 
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof ProxyChannel) {
             ProxyChannel heartChannelobj = (ProxyChannel) obj;
-            return channel.equals(heartChannelobj.getChannel());
+            if (channel != null) {
+                return channel.equals(heartChannelobj.getChannel());
+            }
         }
         return super.equals(obj);
     }

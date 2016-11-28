@@ -36,17 +36,43 @@ public class AcceptNatBTPInboundHandler extends SimpleChannelUpstreamHandler {
         //------
         HeartMsg msg0 = (HeartMsg) message;
         Channel channel = ctx.getChannel();
-        flushNatBTPChannel(channel);
+        UserNatBTPChannel.NatBTPChannel natBTPChannel = flushNatBTPChannel(channel);
         if (msg0.isNatRegisterBTPChannel()) {
-            msgNatRegisterBTP(userNatBTPChannel, msg0);
+            msgNatRegisterBTP(natBTPChannel, msg0);
+        }
+        if (msg0.isRealChannelConnected()) {
+            HeartMsg.RealChannelConnected realChannelConnected
+                = msg0.asSubRealChannelConnected();
+            msgRealChannelConnected(natBTPChannel, realChannelConnected);
+        }
+        if (msg0.isRealWriteToNatBTP()) {
+            HeartMsg.RealWriteToNatBTP realWriteToNatBTP
+                = msg0.asSubRealWriteToNatBTP();
+            msgRealWriteToNatBTP(natBTPChannel, realWriteToNatBTP);
         }
     }
 
-    private void msgNatRegisterBTP(UserNatBTPChannel userNatBTPChannel, HeartMsg msg0) {
+    private void msgRealWriteToNatBTP(final UserNatBTPChannel.NatBTPChannel userNatBTPChannel, HeartMsg.RealWriteToNatBTP realWriteToNatBTP) {
+        LOGGER.debug("msgRealWriteToNatBTP");
+        userNatBTPChannel.writeToUser(realWriteToNatBTP.getMsgBody()).addListener(new ChannelFutureListener() {
+            public void operationComplete(ChannelFuture future) throws Exception {
+                LOGGER.debug("msgRealWriteToNatBTP isSuccess:{},{},{}", future.isSuccess(),
+                    userNatBTPChannel.getUserNatBTPChannel().getUserchannel().getChannel().isReadable(),
+                    userNatBTPChannel.getUserNatBTPChannel().getUserchannel().getChannel().isWritable());
+            }
+        });
+    }
+
+    private void msgRealChannelConnected(UserNatBTPChannel.NatBTPChannel userNatBTPChannel, HeartMsg.RealChannelConnected realChannelConnected) {
+        LOGGER.debug("msgRealChannelConnected");
+        userNatBTPChannel.runStatusTask(UserNatBTPChannel.ChannelStatus.CONNECTED);
+    }
+
+    private void msgNatRegisterBTP(UserNatBTPChannel.NatBTPChannel userNatBTPChannel, HeartMsg msg0) {
         HeartMsg.NatRegisterBTPChannel natRegisterBTPChannel
             = msg0.asSubNatRegisterBTPChannel();
         LOGGER.debug("msgNatRegisterBTP,AcptUserPort:{}", natRegisterBTPChannel.getAcptUserPort());
-        channelShare.putNatBTPChannel(userNatBTPChannel, natRegisterBTPChannel.getAcptUserPort());
+        channelShare.putNatBTPChannel(userNatBTPChannel.getUserNatBTPChannel(), natRegisterBTPChannel.getAcptUserPort());
     }
 
     @Override

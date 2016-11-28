@@ -32,8 +32,7 @@ public class NatBTPInboundHandler extends SimpleChannelUpstreamHandler {
 
     @Override
     public void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-        flushNatBTPChannel(ctx.getChannel());
-        realNatBTPChannel.writeRegisterNatBTP(acptUserAddr);
+        flushNatBTPChannel(ctx.getChannel()).writeRegisterNatBTP(acptUserAddr);
     }
 
     @Override
@@ -44,18 +43,30 @@ public class NatBTPInboundHandler extends SimpleChannelUpstreamHandler {
             return;
         }
         Channel channel = ctx.getChannel();
-        flushNatBTPChannel(channel);
+        RealNatBTPChannel.NatBTPChannel natBTPChannel = flushNatBTPChannel(channel);
         HeartMsg msg0 = (HeartMsg) message;
         if (msg0.isUserChannelConnected()) {
             HeartMsg.UserChannelConnected userWriteToNatBTP
                 = msg0.asSubUserChannelConnected();
-            userChannelConnected(realNatBTPChannel, userWriteToNatBTP);
+            userChannelConnected(natBTPChannel, userWriteToNatBTP);
+        }
+        if (msg0.isUserWriteToNatBTP()) {
+            HeartMsg.UserWriteToNatBTP userWriteToNatBTP = msg0.asSubUserWriteToNatBTP();
+            msgUserWriteToNatBTP(natBTPChannel, userWriteToNatBTP);
         }
     }
 
-    private void userChannelConnected(final RealNatBTPChannel realNatBTPChannel, HeartMsg.UserChannelConnected userWriteToNatBTP) {
-        final ChannelFuture realClient = realClientFactory.getRealClient(realNatBTPChannel);
-        realNatBTPChannel.flushRealChannel(realClient.getChannel());
+    private void msgUserWriteToNatBTP(RealNatBTPChannel.NatBTPChannel natBTPChannel, HeartMsg.UserWriteToNatBTP userWriteToNatBTP) {
+        LOGGER.debug("msgUserWriteToNatBTP");
+        natBTPChannel.writeToReal(userWriteToNatBTP.getMsgBody());
+    }
+
+    private void userChannelConnected(final RealNatBTPChannel.NatBTPChannel natBTPChannel,
+                                      HeartMsg.UserChannelConnected userWriteToNatBTP) {
+        LOGGER.debug("userChannelConnected");
+        RealNatBTPChannel realNatChannel = natBTPChannel.getRealNatChannel();
+        final ChannelFuture realClient = realClientFactory.getRealClient(realNatChannel);
+        realNatChannel.flushRealChannel(realClient.getChannel());
     }
 
     @Override

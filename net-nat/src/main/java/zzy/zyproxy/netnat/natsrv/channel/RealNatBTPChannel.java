@@ -1,5 +1,6 @@
 package zzy.zyproxy.netnat.natsrv.channel;
 
+import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
 import zzy.zyproxy.core.channel.ProxyChannel;
@@ -39,15 +40,8 @@ public class RealNatBTPChannel {
         return this;
     }
 
+    public void close() {
 
-    public ChannelFuture writeRegisterNatBTP(InetSocketAddress acptUserAddr) {
-        HeartMsg msg = new HeartMsg();
-        msg.setHeartBody(msg.new NatRegisterBTPChannel().setAcptUserPort(acptUserAddr.getPort()));
-        return natBTPChannel.write(msg);
-    }
-
-    public ChannelFuture writeRealChannelConnected() {
-        return natBTPChannel.writeRealChannelConnected();
     }
 
     public class RealChannel extends ProxyChannel<RealChannel> {
@@ -61,6 +55,20 @@ public class RealNatBTPChannel {
             return this;
         }
 
+        public ChannelFuture writeToNatBTP(byte[] bytes) {
+            HeartMsg msg = new HeartMsg();
+            msg.setHeartBody(msg.new RealWriteToNatBTP().setMsgBody(bytes));
+            return natBTPChannel.write(msg);
+        }
+
+        public ChannelFuture writeRealChannelConnected() {
+            return natBTPChannel.writeRealChannelConnected();
+        }
+
+        public ChannelFuture writeMsgBody(byte[] msgBody) {
+            ChannelBuffer buffer = channel.getConfig().getBufferFactory().getBuffer(msgBody, 0, msgBody.length);
+            return channel.write(buffer);
+        }
     }
 
     public class NatBTPChannel extends HeartChannel<NatBTPChannel> {
@@ -82,6 +90,20 @@ public class RealNatBTPChannel {
             HeartMsg msg = new HeartMsg();
             msg.setHeartBody(msg.new RealChannelConnected());
             return write(msg);
+        }
+
+        public ChannelFuture writeRegisterNatBTP(InetSocketAddress acptUserAddr) {
+            HeartMsg msg = new HeartMsg();
+            msg.setHeartBody(msg.new NatRegisterBTPChannel().setAcptUserPort(acptUserAddr.getPort()));
+            return natBTPChannel.write(msg);
+        }
+
+        public RealNatBTPChannel getRealNatChannel() {
+            return RealNatBTPChannel.this;
+        }
+
+        public ChannelFuture writeToReal(byte[] msgBody) {
+            return realChannel.writeMsgBody(msgBody);
         }
     }
 }

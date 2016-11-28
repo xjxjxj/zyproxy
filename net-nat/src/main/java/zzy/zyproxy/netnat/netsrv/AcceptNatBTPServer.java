@@ -2,6 +2,8 @@ package zzy.zyproxy.netnat.netsrv;
 
 import org.jboss.netty.channel.*;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
+import org.jboss.netty.handler.logging.LoggingHandler;
+import org.jboss.netty.logging.InternalLogLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import zzy.zyproxy.core.packet.heart.HeartMsgCodecFactory;
@@ -35,10 +37,13 @@ public final class AcceptNatBTPServer extends AcceptServer {
         return new ChannelPipelineFactory() {
             public ChannelPipeline getPipeline() throws Exception {
                 ChannelPipeline pipeline = Channels.pipeline();
+
                 HeartMsgCodecFactory.addDecoderAtLast(pipeline);
 
                 ChannelPiplineUtil.addLast(pipeline,
-                        new AcceptNatBTPInboundHandler(channelShare)
+                    new LoggingHandler(InternalLogLevel.INFO),
+
+                    new AcceptNatBTPInboundHandler(channelShare)
                 );
 
                 HeartMsgCodecFactory.addEncoderAtLast(pipeline);
