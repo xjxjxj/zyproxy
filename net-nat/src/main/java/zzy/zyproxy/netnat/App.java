@@ -16,9 +16,10 @@ public class App {
     public static void main(String[] args) throws InterruptedException {
         final InetSocketAddress acptHeartAddr = new InetSocketAddress("127.0.0.1", 8855);
         final InetSocketAddress acptBackAddr = new InetSocketAddress("127.0.0.1", 8856);
-        final InetSocketAddress acptUserAddr = new InetSocketAddress("127.0.0.1", 3307);
 
-        final InetSocketAddress natRealAddr = new InetSocketAddress("127.0.0.1", 3306);
+        final InetSocketAddress acptUserAddr = new InetSocketAddress("127.0.0.1", 8009);
+        final InetSocketAddress natRealAddr = new InetSocketAddress("127.0.0.1", 80);
+
         final ChannelShare channelShare = new ChannelShare();
         final int allIdleTimeSeconds = 100 * 60;
 

@@ -28,7 +28,7 @@
         </rollingPolicy>
     </appender>
 
-    <logger name="zzy.zyproxy" level="DEBUG"/>
+    <logger name="zzy.zyproxy" level="INFO"/>
     <logger name="zzy.zyproxy.core.codec.msgpackcodec" level="INFO"/>
 
     <root level="INFO">

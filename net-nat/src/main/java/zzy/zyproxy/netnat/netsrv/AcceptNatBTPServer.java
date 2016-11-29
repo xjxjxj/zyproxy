@@ -40,6 +40,8 @@ public final class AcceptNatBTPServer extends AcceptServer {
 
                 HeartMsgCodecFactory.addDecoderAtLast(pipeline);
 
+                ChannelPiplineUtil.addInfo(pipeline);
+
                 ChannelPiplineUtil.addLast(pipeline,
                     new AcceptNatBTPInboundHandler(channelShare)
                 );

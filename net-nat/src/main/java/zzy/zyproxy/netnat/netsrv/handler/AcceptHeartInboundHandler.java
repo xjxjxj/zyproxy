@@ -29,7 +29,6 @@ public class AcceptHeartInboundHandler extends SimpleChannelUpstreamHandler {
 
     @Override
     public void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-        LOGGER.info("writeChannelConnected@{}", ctx.getChannel());
     }
 
     @Override
@@ -47,10 +46,10 @@ public class AcceptHeartInboundHandler extends SimpleChannelUpstreamHandler {
             msgPing(netHeartChannel, msg0);
         }
         if (msg0.isNatRegisterHeart()) {
-            msgRegisterLanHeart(netHeartChannel,msg0);
+            msgRegisterLanHeart(netHeartChannel, msg0);
         }
         if (msg0.isNatResponseBTPChannel()) {
-            msgLanResponseNewChannel(netHeartChannel,msg0);
+            msgLanResponseNewChannel(netHeartChannel, msg0);
         }
     }
 
@@ -60,6 +59,8 @@ public class AcceptHeartInboundHandler extends SimpleChannelUpstreamHandler {
     }
 
     private void msgRegisterLanHeart(NetHeartChannel netHeartChannel, HeartMsg msg0) {
+        LOGGER.info("msgRegisterLanHeart@{}", netHeartChannel);
+
         HeartMsg.NatRegisterHeart natRegisterHeart = msg0.asSubNatRegisterHeart();
         channelShare.putNewHeartChannel(netHeartChannel, natRegisterHeart.getNetAcptUserPort());
     }

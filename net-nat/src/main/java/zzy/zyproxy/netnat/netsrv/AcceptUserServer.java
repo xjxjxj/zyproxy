@@ -35,6 +35,7 @@ public final class AcceptUserServer extends AcceptServer {
         return new ChannelPipelineFactory() {
             public ChannelPipeline getPipeline() throws Exception {
                 ChannelPipeline pipeline = Channels.pipeline();
+                ChannelPiplineUtil.addInfo(pipeline);
                 ChannelPiplineUtil.addLast(pipeline,
                     new AcceptUserInboundHandler(channelShare));
                 return pipeline;

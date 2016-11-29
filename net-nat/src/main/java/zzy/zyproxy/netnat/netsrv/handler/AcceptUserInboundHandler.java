@@ -128,12 +128,16 @@ public class AcceptUserInboundHandler extends SimpleChannelUpstreamHandler {
     public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
         LOGGER.debug("writeUserChannelClosed");
         userNatBTPChannel.flushUserChannel(ctx.getChannel()).writeUserChannelClosed();
+        Channel channel = ctx.getChannel();
+        LOGGER.warn("channelClosed:{}:{}:{}:{}:{}--{}", channel.isBound(), channel.isWritable(), channel.isConnected(), channel.isOpen(), channel.isReadable(), System.currentTimeMillis());
     }
 
 
+    @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
-        LOGGER.debug("exceptionCaught，e:{}", e.getCause());
+        Channel channel = ctx.getChannel();
+        LOGGER.error("exceptionCaught:{}:{}:{}:{}:{}--{}",channel.isBound(),channel.isWritable(),channel.isConnected(),channel.isOpen(),channel.isReadable(),System.currentTimeMillis());
     }
 
     @Override
