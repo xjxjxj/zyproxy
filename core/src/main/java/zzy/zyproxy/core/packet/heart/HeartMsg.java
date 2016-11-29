@@ -21,38 +21,6 @@ public class HeartMsg implements Packet {
         return this;
     }
 
-    //############[================]############//
-    //############[注册新的代理端口]############//
-    //############[================]############//
-    private static final int NAT_REGISTER_HEART = 0x001a;
-
-    private Integer netUserAcptPort;
-
-    public class NatRegisterHeart extends HeartBody {
-
-        public Integer getNetAcptUserPort() {
-            return netUserAcptPort;
-        }
-
-        public NatRegisterHeart setNetAcptUserPort(Integer port) {
-            netUserAcptPort = port;
-            return this;
-        }
-
-        protected void setOuterHeartType() {
-            HEART_TYPE = NAT_REGISTER_HEART;
-        }
-    }
-
-    public boolean isNatRegisterHeart() {
-        return NAT_REGISTER_HEART == HEART_TYPE;
-    }
-
-    public NatRegisterHeart asSubNatRegisterHeart() {
-        return new NatRegisterHeart();
-    }
-
-
     //############[========== ]############//
     //############[NAT发送PING]############//
     //############[===========]############//
@@ -92,54 +60,6 @@ public class HeartMsg implements Packet {
     }
 
     //############[========== ]############//
-    //############[net端发起back连接请求]############//
-    //############[===========]############//
-    private static final int NET_REQUEST_BTP_CHANNEL = 0x004a;
-
-    private int netRequestBTPChannelNum = 1;
-
-    public class NetRequestBTPChannel extends HeartBody {
-        public void setNetRequestNewChannelNum(int num) {
-            netRequestBTPChannelNum = num;
-        }
-
-        public int getNetRequestNewChannelNum() {
-            return netRequestBTPChannelNum;
-        }
-
-        protected void setOuterHeartType() {
-            HEART_TYPE = NET_REQUEST_BTP_CHANNEL;
-        }
-    }
-
-    public boolean isNetRequestBTPChannel() {
-        return NET_REQUEST_BTP_CHANNEL == HEART_TYPE;
-    }
-
-    public NetRequestBTPChannel asSubNetRequestBTPChannel() {
-        return new NetRequestBTPChannel();
-    }
-
-    //############[========== ]############//
-    //############[Nat端响应btp连接请求]############//
-    //############[===========]############//
-    private static final int NAT_RESPONSE_BTP_CHANNEL = 0x005a;
-
-    public class NatResponseBTPChannel extends HeartBody {
-        protected void setOuterHeartType() {
-            HEART_TYPE = NAT_RESPONSE_BTP_CHANNEL;
-        }
-    }
-
-    public boolean isNatResponseBTPChannel() {
-        return NAT_RESPONSE_BTP_CHANNEL == HEART_TYPE;
-    }
-
-    public NatResponseBTPChannel asSubNatResponseBTPChannel() {
-        return new NatResponseBTPChannel();
-    }
-
-    //############[========== ]############//
     //############[Nat端注册btp channel]############//
     //############[===========]############//
     private static final int NAT_REGISTER_BTP_CHANNEL = 0x006a;
@@ -171,141 +91,101 @@ public class HeartMsg implements Packet {
     }
 
     //############[========== ]############//
-    //############[用户发送信息]############//
+    //############[  传输数据  ]############//
     //############[===========]############//
-    private static final int USER_WRITE_TO_NAT_BTP = 0x007a;
+    private Integer userChannelCode;
 
-    private byte[] userWriteToNatMsgBody;
+    private static final int TRANSFER_BODY = 0x007a;
 
-    public class UserWriteToNatBTP extends HeartBody {
+    private byte[] transferBodyMsg;
+
+    public class TransferBody extends HeartBody {
 
         protected void setOuterHeartType() {
-            HEART_TYPE = USER_WRITE_TO_NAT_BTP;
+            HEART_TYPE = TRANSFER_BODY;
         }
 
-        public UserWriteToNatBTP setMsgBody(byte[] msgBody) {
-            userWriteToNatMsgBody = msgBody;
+        public TransferBody setMsgBody(byte[] msgBody) {
+            transferBodyMsg = msgBody;
             return this;
         }
 
         public byte[] getMsgBody() {
-            return userWriteToNatMsgBody;
+            return transferBodyMsg;
         }
+
+        public HeartBody setUserCode(Integer userCode) {
+            userChannelCode = userCode;
+            return this;
+        }
+        public Integer getUserCode() {
+            return userChannelCode;
+        }
+
     }
 
-    public boolean isUserWriteToNatBTP() {
-        return USER_WRITE_TO_NAT_BTP == HEART_TYPE;
+    public boolean isTransferBody() {
+        return TRANSFER_BODY == HEART_TYPE;
     }
 
-    public UserWriteToNatBTP asSubUserWriteToNatBTP() {
-        return new UserWriteToNatBTP();
+    public TransferBody asSubTransferBody() {
+        return new TransferBody();
     }
 
-    //############[========== ]############//
-    //############[真实服务器发送信息]############//
-    //############[===========]############//
-    private static final int REAL_WRITE_TO_NAT_BTP = 0x008a;
+    //############[=====================]############//
+    //############[用户和真实服务器连接信息]############//
+    //############[=====================]############//
+    private static final int CONNECTED = 0x009a;
 
-    private byte[] realWriteToNatMsgBody;
-
-    public class RealWriteToNatBTP extends HeartBody {
-
+    public class Connected extends HeartBody {
         protected void setOuterHeartType() {
-            HEART_TYPE = REAL_WRITE_TO_NAT_BTP;
+            HEART_TYPE = CONNECTED;
         }
 
-        public RealWriteToNatBTP setMsgBody(byte[] msgBody) {
-            realWriteToNatMsgBody = msgBody;
+        public HeartBody setUserCode(int userChannelCode0) {
+            userChannelCode = userChannelCode0;
             return this;
         }
 
-        public byte[] getMsgBody() {
-            return realWriteToNatMsgBody;
+        public Integer getUserCode() {
+            return userChannelCode;
         }
     }
 
-    public boolean isRealWriteToNatBTP() {
-        return REAL_WRITE_TO_NAT_BTP == HEART_TYPE;
+    public boolean isConnected() {
+        return CONNECTED == HEART_TYPE;
     }
 
-    public RealWriteToNatBTP asSubRealWriteToNatBTP() {
-        return new RealWriteToNatBTP();
+    public Connected asSubConnected() {
+        return new Connected();
     }
+
 
     //############[========== ]############//
-    //############[用户连接信息]############//
+    //############[断开连接信息]############//
     //############[===========]############//
-    private static final int USER_CHANNEL_CONNECTED = 0x009a;
+    private static final int CLOSED = 0x011a;
 
-    public class UserChannelConnected extends HeartBody {
+    public class Closed extends HeartBody {
         protected void setOuterHeartType() {
-            HEART_TYPE = USER_CHANNEL_CONNECTED;
+            HEART_TYPE = CLOSED;
+        }
+        public HeartBody setUserCode(int userChannelCode0) {
+            userChannelCode = userChannelCode0;
+            return this;
+        }
+
+        public Integer getUserCode() {
+            return userChannelCode;
         }
     }
 
-    public boolean isUserChannelConnected() {
-        return USER_CHANNEL_CONNECTED == HEART_TYPE;
+    public boolean isClosed() {
+        return CLOSED == HEART_TYPE;
     }
 
-    public UserChannelConnected asSubUserChannelConnected() {
-        return new UserChannelConnected();
-    }
-
-    //############[========== ]############//
-    //############[真实服务器连接信息]############//
-    //############[===========]############//
-    private static final int REAL_CHANNEL_CONNECTED = 0x010a;
-
-    public class RealChannelConnected extends HeartBody {
-        protected void setOuterHeartType() {
-            HEART_TYPE = REAL_CHANNEL_CONNECTED;
-        }
-    }
-
-    public boolean isRealChannelConnected() {
-        return REAL_CHANNEL_CONNECTED == HEART_TYPE;
-    }
-
-    public RealChannelConnected asSubRealChannelConnected() {
-        return new RealChannelConnected();
-    }
-
-    //############[========== ]############//
-    //############[真实服务器断开连接信息]############//
-    //############[===========]############//
-    private static final int REAL_CHANNEL_CLOSED = 0x011a;
-
-    public class RealChannelClosed extends HeartBody {
-        protected void setOuterHeartType() {
-            HEART_TYPE = REAL_CHANNEL_CLOSED;
-        }
-    }
-
-    public boolean isRealChannelClosed() {
-        return REAL_CHANNEL_CLOSED == HEART_TYPE;
-    }
-
-    public RealChannelClosed asSubRealChannelClosed() {
-        return new RealChannelClosed();
-    }
-
-    //############[========== ]############//
-    //############[用户端断开连接]############//
-    //############[===========]############//
-    private static final int User_CHANNEL_CLOSED = 0x012a;
-
-    public class UserChannelClosed extends HeartBody {
-        protected void setOuterHeartType() {
-            HEART_TYPE = User_CHANNEL_CLOSED;
-        }
-    }
-
-    public boolean isUserChannelClosed() {
-        return User_CHANNEL_CLOSED == HEART_TYPE;
-    }
-
-    public UserChannelClosed asSubUserChannelClosed() {
-        return new UserChannelClosed();
+    public Closed asSubClosed() {
+        return new Closed();
     }
 
     ////-------------------
@@ -313,7 +193,6 @@ public class HeartMsg implements Packet {
     public String toString() {
         return new ToStringBuilder(this)
             .append("HEART_TYPE", HEART_TYPE)
-            .append("netUserAcptPort", netUserAcptPort)
             .toString();
     }
 }

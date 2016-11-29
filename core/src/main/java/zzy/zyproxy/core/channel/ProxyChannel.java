@@ -1,6 +1,7 @@
 package zzy.zyproxy.core.channel;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.jboss.netty.buffer.ChannelBufferFactory;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
 
@@ -10,8 +11,10 @@ import java.net.SocketAddress;
 /**
  * @author zhouzhongyuan
  * @date 2016/11/23
+ * CT channel type
+ * MT msg type
  */
-public abstract class ProxyChannel<T> {
+public abstract class ProxyChannel<CT, MT> {
     protected Channel channel;
 
     /**
@@ -69,6 +72,16 @@ public abstract class ProxyChannel<T> {
         return null;
     }
 
+    public ChannelBufferFactory getChannelBufferFactory() {
+        return channel.getConfig().getBufferFactory();
+    }
+
+    protected ChannelFuture write0(Object msg) {
+        return channel.write(msg);
+    }
+
+    public abstract ChannelFuture write(MT msg);
+
     public Boolean isConnected() {
         return channel.isConnected();
     }
@@ -77,5 +90,7 @@ public abstract class ProxyChannel<T> {
         this.channel = channel;
     }
 
-    public abstract T flushChannel(Channel channel);
+    public abstract CT flushChannel(Channel channel);
+
+    public abstract void close();
 }

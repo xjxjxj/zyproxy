@@ -33,24 +33,25 @@ public final class RealClientFactory {
         this.natRealAddr = natRealAddr;
     }
 
-    private ChannelPipelineFactory getPipelineFactory(final RealNatBTPChannel realNatBTPChannel) {
+    private ChannelPipelineFactory getPipelineFactory(final RealNatBTPChannel.RealChannel realChannel) {
         return new ChannelPipelineFactory() {
             public ChannelPipeline getPipeline() throws Exception {
                 ChannelPipeline pipeline = Channels.pipeline();
                 ChannelPiplineUtil.addLast(pipeline,
-                    new RealInboundHandler(realNatBTPChannel));
+                    new RealInboundHandler(realChannel));
                 return pipeline;
             }
         };
     }
 
-    public ChannelFuture getRealClient(RealNatBTPChannel realNatBTPChannel) {
+    public ChannelFuture getRealClient(RealNatBTPChannel.RealChannel realChannel) {
         ClientBootstrap bootstrap = new ClientBootstrap(
             new NioClientSocketChannelFactory(
                 bossExecutor,
                 workExecutor));
-        bootstrap.setPipelineFactory(getPipelineFactory(realNatBTPChannel));
+        bootstrap.setPipelineFactory(getPipelineFactory(realChannel));
         bootstrap.setOption("tcpNoDelay", true);
+
         return bootstrap.connect(natRealAddr);
     }
 }

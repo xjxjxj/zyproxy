@@ -1,6 +1,8 @@
 package zzy.zyproxy.netnat.netsrv.handler;
 
 import org.jboss.netty.channel.*;
+import org.jboss.netty.handler.timeout.IdleState;
+import org.jboss.netty.handler.timeout.IdleStateEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import zzy.zyproxy.core.packet.heart.HeartMsg;
@@ -19,11 +21,11 @@ public class AcceptNatBTPInboundHandler extends SimpleChannelUpstreamHandler {
 
     public AcceptNatBTPInboundHandler(ChannelShare channelShare) {
         this.channelShare = channelShare;
-        userNatBTPChannel = new UserNatBTPChannel(null, null, channelShare);
+        userNatBTPChannel = new UserNatBTPChannel(null);
     }
 
-    private UserNatBTPChannel.NatBTPChannel flushNatBTPChannel(Channel channel) {
-        return userNatBTPChannel.flushNatBTPChannel(channel);
+    private UserNatBTPChannel flushNatBTPChannel(Channel channel) {
+        return userNatBTPChannel.flushChannel(channel);
     }
 
     @Override
@@ -36,63 +38,81 @@ public class AcceptNatBTPInboundHandler extends SimpleChannelUpstreamHandler {
         //------
         HeartMsg msg0 = (HeartMsg) message;
         Channel channel = ctx.getChannel();
-        UserNatBTPChannel.NatBTPChannel natBTPChannel = flushNatBTPChannel(channel);
+        UserNatBTPChannel userNatBTPChannel = flushNatBTPChannel(channel);
         if (msg0.isNatRegisterBTPChannel()) {
-            msgNatRegisterBTP(natBTPChannel, msg0);
+            HeartMsg.NatRegisterBTPChannel natRegisterBTPChannel = msg0.asSubNatRegisterBTPChannel();
+            msgNatRegisterBTP(userNatBTPChannel, natRegisterBTPChannel);
         }
-        if (msg0.isRealChannelConnected()) {
-            HeartMsg.RealChannelConnected realChannelConnected
-                = msg0.asSubRealChannelConnected();
-            msgRealChannelConnected(natBTPChannel, realChannelConnected);
+        if (msg0.isPing()) {
+            HeartMsg.Ping ping
+                = msg0.asSubPing();
+            msgPing(userNatBTPChannel, ping);
         }
-        if (msg0.isRealWriteToNatBTP()) {
-            HeartMsg.RealWriteToNatBTP realWriteToNatBTP
-                = msg0.asSubRealWriteToNatBTP();
-            msgRealWriteToNatBTP(natBTPChannel, realWriteToNatBTP);
+        if (msg0.isConnected()) {
+            HeartMsg.Connected realConnected
+                = msg0.asSubConnected();
+            msgRealConnected(userNatBTPChannel, realConnected);
         }
-        if (msg0.isRealChannelClosed()) {
-            HeartMsg.RealChannelClosed realChannelClosed
-                = msg0.asSubRealChannelClosed();
-            msgRealChannelClosed(natBTPChannel, realChannelClosed);
+        if (msg0.isTransferBody()) {
+            HeartMsg.TransferBody transferBody
+                = msg0.asSubTransferBody();
+            msgTransferBody(userNatBTPChannel, transferBody);
+        }
+        if (msg0.isClosed()) {
+            HeartMsg.Closed closed
+                = msg0.asSubClosed();
+            msgRealChannelClosed(userNatBTPChannel, closed);
         }
     }
 
-    private void msgRealChannelClosed(UserNatBTPChannel.NatBTPChannel natBTPChannel, HeartMsg.RealChannelClosed realChannelClosed) {
+    private void msgPing(final UserNatBTPChannel natBTPChannel, final HeartMsg.Ping msg) {
+        natBTPChannel.writePong();
+    }
+
+    private void msgRealChannelClosed(UserNatBTPChannel userNatBTPChannel, HeartMsg.Closed closed) {
         LOGGER.debug("msgRealChannelClosed");
-        natBTPChannel.realChannelClosed();
+        userNatBTPChannel.realChannelClosed(closed.getUserCode());
     }
 
-    private void msgRealWriteToNatBTP(final UserNatBTPChannel.NatBTPChannel userNatBTPChannel, HeartMsg.RealWriteToNatBTP realWriteToNatBTP) {
+    private void msgTransferBody(final UserNatBTPChannel userNatBTPChannel, HeartMsg.TransferBody transferBody) {
         LOGGER.debug("msgRealWriteToNatBTP");
-        userNatBTPChannel.writeToUser(realWriteToNatBTP.getMsgBody());
+        userNatBTPChannel.writeToUser(transferBody.getMsgBody(),transferBody.getUserCode());
     }
 
-    private void msgRealChannelConnected(UserNatBTPChannel.NatBTPChannel userNatBTPChannel, HeartMsg.RealChannelConnected realChannelConnected) {
-        LOGGER.debug("msgRealChannelConnected");
-        userNatBTPChannel.realChannelConnected();
+    private void msgRealConnected(UserNatBTPChannel userNatBTPChannel, HeartMsg.Connected realConnected) {
+        LOGGER.debug("msgRealConnected");
+        userNatBTPChannel.realConnected(realConnected.getUserCode());
     }
 
-    private void msgNatRegisterBTP(UserNatBTPChannel.NatBTPChannel natBTPChannel, HeartMsg msg0) {
-        HeartMsg.NatRegisterBTPChannel natRegisterBTPChannel
-            = msg0.asSubNatRegisterBTPChannel();
-        int acptUserPort = natRegisterBTPChannel.getAcptUserPort();
-        LOGGER.debug("msgNatRegisterBTP,AcptUserPort:{}", acptUserPort);
-        natBTPChannel.setAcptUserPort(acptUserPort);
-        channelShare.putNatBTPChannel(natBTPChannel.getUserNatBTPChannel(), acptUserPort);
+    private void msgNatRegisterBTP(UserNatBTPChannel natBTPChannel, HeartMsg.NatRegisterBTPChannel msg) {
+        int acptUserPort = msg.getAcptUserPort();
+        LOGGER.debug("msgNatRegisterBTP,AcptUserPort:{}【开始注册】", acptUserPort);
+        channelShare.addUserNatBTPChannel(natBTPChannel, acptUserPort);
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
-        LOGGER.warn("{}", e);
+        LOGGER.error("{}", e);
     }
 
+    /**
+     * ----------
+     * IdleStateEvent 超时检测
+     */
     @Override
-    public void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-        LOGGER.debug("writeChannelConnected");
+    public void handleUpstream(ChannelHandlerContext ctx, ChannelEvent e) throws Exception {
+        if (e instanceof IdleStateEvent) {
+            UserNatBTPChannel userNatBTPChannel = flushNatBTPChannel(ctx.getChannel());
+            channelIdle(userNatBTPChannel, (IdleStateEvent) e);
+        }
+        super.handleUpstream(ctx, e);
     }
 
-    @Override
-    public void channelDisconnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-        super.channelDisconnected(ctx, e);
+    private void channelIdle(UserNatBTPChannel userNatBTPChannel, IdleStateEvent e) {
+        IdleState state = e.getState();
+        if (state.equals(IdleState.ALL_IDLE)) {
+            LOGGER.debug("NET端，心跳检测，长时间没有{}@{} 关闭NatBTPChannel", state, userNatBTPChannel);
+            userNatBTPChannel.close();
+        }
     }
 }
