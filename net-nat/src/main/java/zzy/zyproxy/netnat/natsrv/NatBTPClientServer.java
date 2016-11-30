@@ -28,6 +28,7 @@ public final class NatBTPClientServer {
     private final RealClientFactory realClientFactory;
     private final NatBTPClientFactory natBTPClientFactory;
     private final ArrayList<Channel> channels = new ArrayList<Channel>();
+    private Timer timer = new HashedWheelTimer();
 
     public NatBTPClientServer(InetSocketAddress acptUserAddr,
                               InetSocketAddress acptBTPAddr, InetSocketAddress natRealAddr,
@@ -68,7 +69,7 @@ public final class NatBTPClientServer {
                     HeartMsgCodecFactory.addDecoderAtLast(pipeline);
 
                     ChannelPiplineUtil.addLast(pipeline,
-                        new IdleStateHandler(new HashedWheelTimer(), 10, 10, allIdleTimeSeconds),
+                        new IdleStateHandler(timer, 10, 10, allIdleTimeSeconds),
                         new NatBTPInboundHandler(realClientFactory, acptUserAddr));
 
                     HeartMsgCodecFactory.addEncoderAtLast(pipeline);

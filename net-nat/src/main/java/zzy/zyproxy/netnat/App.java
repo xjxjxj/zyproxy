@@ -16,7 +16,10 @@ public class App {
         final InetSocketAddress acptBTPAddr = new InetSocketAddress("127.0.0.1", 8856);
 
         final InetSocketAddress acptUserAddr = new InetSocketAddress("127.0.0.1", 8009);
-        final InetSocketAddress natRealAddr = new InetSocketAddress("127.0.0.1", 80);
+        final InetSocketAddress natRealAddr = new InetSocketAddress("127.0.0.1", 8888);
+
+        final InetSocketAddress acptUserAddr1 = new InetSocketAddress("127.0.0.1", 3307);
+        final InetSocketAddress natRealAddr1 = new InetSocketAddress("127.0.0.1", 3306);
 
         final ChannelShare channelShare = new ChannelShare();
         final int allIdleTimeSeconds = 100 * 60;
@@ -39,6 +42,14 @@ public class App {
                 acceptUserServer.start();
             }
         });
+        Thread acceptUserServer1 = new Thread(new Runnable() {
+            public void run() {
+                AcceptUserServer acceptUserServer = new AcceptUserServer(
+                    acptUserAddr1,
+                    channelShare);
+                acceptUserServer.start();
+            }
+        });
         //natBTPClient
         Thread natBTPClient = new Thread(new Runnable() {
             public void run() {
@@ -47,14 +58,26 @@ public class App {
                     acptBTPAddr,
                     natRealAddr,
                     (int) (allIdleTimeSeconds * 0.8f));
-                natBTPClientServer.start(20);
+                natBTPClientServer.start(1);
+            }
+        });
+        Thread natBTPClient1 = new Thread(new Runnable() {
+            public void run() {
+                NatBTPClientServer natBTPClientServer = new NatBTPClientServer(
+                    acptUserAddr1,
+                    acptBTPAddr,
+                    natRealAddr1,
+                    (int) (allIdleTimeSeconds * 0.8f));
+                natBTPClientServer.start(1);
             }
         });
 
         acceptBTPServer.start();
         acceptUserServer.start();
-        Thread.sleep(2000);
+        acceptUserServer1.start();
+        Thread.sleep(1000);
         natBTPClient.start();
+        natBTPClient1.start();
         synchronized (App.class) {
             do {
                 try {

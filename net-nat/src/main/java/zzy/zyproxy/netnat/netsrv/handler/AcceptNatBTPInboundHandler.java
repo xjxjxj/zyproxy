@@ -92,7 +92,7 @@ public class AcceptNatBTPInboundHandler extends SimpleChannelUpstreamHandler {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
-        LOGGER.error("{}", e);
+        LOGGER.warn("{}", e);
     }
 
     /**

@@ -19,16 +19,15 @@ import java.util.HashMap;
 public class RealNatBTPChannel extends ProxyChannel<RealNatBTPChannel, HeartMsg> {
     private final static Logger LOGGER = LoggerFactory.getLogger(RealNatBTPChannel.class);
 
-    private HashMap<Integer, RealChannel> realChannelMap;
+    private HashMap<Integer, RealChannel> realChannelMap = new HashMap<Integer, RealChannel>();
 
     public RealNatBTPChannel(Channel channel) {
         super(channel);
-        realChannelMap = new HashMap<Integer, RealChannel>();
     }
 
 
     public void close() {
-
+        LOGGER.error("RealNatBTPChannel#close!!");
     }
 
     @Override
@@ -72,11 +71,39 @@ public class RealNatBTPChannel extends ProxyChannel<RealNatBTPChannel, HeartMsg>
         return realChannel.writeMsgBody(msgBody);
     }
 
+    private ChannelFuture writeRealConnected(Integer userCode) {
+        HeartMsg msg = new HeartMsg();
+        msg.setHeartBody(msg.new Connected().setUserCode(userCode));
+        return write(msg);
+    }
+
+    private ChannelFuture writeTransferBody(byte[] bytes, Integer userCode) {
+        HeartMsg msg = new HeartMsg();
+        msg.setHeartBody(msg.new TransferBody().setMsgBody(bytes).setUserCode(userCode));
+        return write(msg);
+    }
+
+    //real因为user被动关闭
     public void userChannelClosed(Integer userCode) {
-        if (userCode == null) {
-            throw new NullPointerException("userChannelClosed 断开 userCode为null");
+        if (userCode != null) {
+            RealChannel realChannel = realChannelMap.remove(userCode);
+            if (realChannel != null) {
+                realChannel.close();
+            }
         }
-        realChannelMap.remove(userCode);
+    }
+
+    //real主动关闭
+    private ChannelFuture writeRealChannelClosed(final Integer userCode) {
+        if (userCode != null) {
+            RealChannel channel = realChannelMap.remove(userCode);
+            if (channel != null) {
+                HeartMsg msg = new HeartMsg();
+                msg.setHeartBody(msg.new Closed().setUserCode(userCode));
+                return write(msg);
+            }
+        }
+        return null;
     }
 
     public class RealChannel extends ProxyChannel<RealChannel, ChannelBuffer> {
@@ -100,7 +127,7 @@ public class RealNatBTPChannel extends ProxyChannel<RealNatBTPChannel, HeartMsg>
 
         @Override
         public void close() {
-
+            close0();
         }
 
         public ChannelFuture writeToNatBTP(byte[] bytes) {
@@ -121,31 +148,4 @@ public class RealNatBTPChannel extends ProxyChannel<RealNatBTPChannel, HeartMsg>
         }
     }
 
-    private ChannelFuture writeRealChannelClosed(final Integer userCode) {
-        if (userCode == null) {
-            throw new NullPointerException("writeRealChannelClosed 断开 userCode为null");
-        }
-        HeartMsg msg = new HeartMsg();
-        msg.setHeartBody(msg.new Closed().setUserCode(userCode));
-        write(msg).addListener(new ChannelFutureListener() {
-            public void operationComplete(ChannelFuture future) throws Exception {
-                if (future.isSuccess()) {
-                    realChannelMap.remove(userCode);
-                }
-            }
-        });
-        return write(msg);
-    }
-
-    private ChannelFuture writeTransferBody(byte[] bytes, Integer userCode) {
-        HeartMsg msg = new HeartMsg();
-        msg.setHeartBody(msg.new TransferBody().setMsgBody(bytes).setUserCode(userCode));
-        return write(msg);
-    }
-
-    private ChannelFuture writeRealConnected(Integer userCode) {
-        HeartMsg msg = new HeartMsg();
-        msg.setHeartBody(msg.new Connected().setUserCode(userCode));
-        return write(msg);
-    }
 }

@@ -117,11 +117,6 @@ public class NatBTPInboundHandler extends SimpleChannelUpstreamHandler {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
-        LOGGER.error("{}", e);
-    }
-
-    @Override
-    public void channelDisconnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-        super.channelDisconnected(ctx, e);
+        LOGGER.warn("{}", e);
     }
 }

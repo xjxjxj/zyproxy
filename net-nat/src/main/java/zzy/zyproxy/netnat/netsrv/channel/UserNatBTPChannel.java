@@ -19,7 +19,6 @@ public class UserNatBTPChannel extends ProxyChannel<UserNatBTPChannel, HeartMsg>
     private final static Logger LOGGER = LoggerFactory.getLogger(UserNatBTPChannel.class);
 
     private final HashMap<Integer, UserChannel> userChannelMap = new HashMap<Integer, UserChannel>();
-    private final HashMap<Integer, Runnable> userChannelConnectedTask = new HashMap<Integer, Runnable>();
 
 
     public UserNatBTPChannel(Channel channel) {
@@ -39,7 +38,7 @@ public class UserNatBTPChannel extends ProxyChannel<UserNatBTPChannel, HeartMsg>
 
     @Override
     public void close() {
-
+        LOGGER.error("UserNatBTPChannel#close!!");
     }
 
     //===写出信息的方法
@@ -97,15 +96,27 @@ public class UserNatBTPChannel extends ProxyChannel<UserNatBTPChannel, HeartMsg>
         return write(msg);
     }
 
+    //user因为real被动关闭
     public void realChannelClosed(Integer userCode) {
-        if (userCode == null) {
-            throw new NullPointerException("writeToUser 断开 userCode为null");
+        if (userCode != null) {
+            UserChannel userChannel = userChannelMap.remove(userCode);
+            if (userChannel != null) {
+                userChannel.close();
+            }
         }
-        UserChannel userChannel = userChannelMap.get(userCode);
-        if (userChannel == null) {
-            throw new NullPointerException("writeToUser 找不到 userChannel");
+    }
+
+    //user主动关闭发送信息给real
+    private ChannelFuture writeUserChannelClosed(final Integer userCode) {
+        if (userCode != null) {
+            UserChannel channel = userChannelMap.remove(userCode);
+            if (channel != null) {
+                HeartMsg msg = new HeartMsg();
+                msg.setHeartBody(msg.new Closed().setUserCode(userCode));
+                return write(msg);
+            }
         }
-        userChannel.close();
+        return null;
     }
 
     public class UserChannel extends ProxyChannel<UserChannel, ChannelBuffer> {
@@ -130,7 +141,7 @@ public class UserNatBTPChannel extends ProxyChannel<UserNatBTPChannel, HeartMsg>
 
         @Override
         public void close() {
-            disconnect();
+            close0();
         }
 
         public ChannelFuture writeToNatBTP(byte[] bytes) {
@@ -151,22 +162,4 @@ public class UserNatBTPChannel extends ProxyChannel<UserNatBTPChannel, HeartMsg>
             return UserNatBTPChannel.this.writeUserChannelClosed(userCode);
         }
     }
-
-    private ChannelFuture writeUserChannelClosed(final Integer userCode) {
-        if (userCode == null) {
-            throw new NullPointerException("writeUserChannelClosed 断开 userCode为null");
-        }
-        HeartMsg msg = new HeartMsg();
-        msg.setHeartBody(msg.new Closed().setUserCode(userCode));
-        write(msg).addListener(new ChannelFutureListener() {
-            public void operationComplete(ChannelFuture future) throws Exception {
-                if (future.isSuccess()) {
-                    userChannelMap.remove(userCode);
-                }
-            }
-        });
-        return write(msg);
-    }
-
-
 }

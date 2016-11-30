@@ -2,6 +2,7 @@ package zzy.zyproxy.core.codec.msgpackcodec;
 
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.ChannelHandler;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.handler.codec.oneone.OneToOneEncoder;
 import org.slf4j.Logger;
@@ -11,6 +12,7 @@ import org.slf4j.LoggerFactory;
  * @author zhouzhongyuan
  * @date 2016/11/23
  */
+@ChannelHandler.Sharable
 public class MsgPackEncoder extends OneToOneEncoder {
     private final static Logger LOGGER = LoggerFactory.getLogger(MsgPackEncoder.class);
     private Class clazz;

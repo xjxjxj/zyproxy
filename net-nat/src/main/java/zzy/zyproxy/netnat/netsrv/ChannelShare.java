@@ -35,7 +35,7 @@ public class ChannelShare {
             public void run() {
                 try {
                     userNatChannelMap.get(port).add(userNatBTPChannel);
-                    LOGGER.debug("addUserNatBTPChannel success,acptUserPort:{}【完成注册】", acptUserPort);
+                    LOGGER.info("addUserNatBTPChannel success,acptUserPort:{}【完成注册】", acptUserPort);
                 } catch (Exception e) {
                     userNatBTPChannel.close();
                     e.printStackTrace();
@@ -51,36 +51,35 @@ public class ChannelShare {
     public void takeUserToNatChannel(final Channel channel,
                                      final InetSocketAddress localAdd,
                                      final takeUserToNatChannelCallable callable) {
-        Runnable userToNatTask = new Runnable() {
-            public void run() {
-                UserNatBTPChannel userNatBTPChannel = null;
-                UserNatBTPChannel.UserChannel userChannel = null;
-                try {
-                    LOGGER.debug("takeUserToNatChannel#run");
-                    int port = localAdd.getPort();
-                    HashSet<UserNatBTPChannel> userNatBTPChannelHashSet = userNatChannelMap.get(String.valueOf(port));
-                    if (userNatBTPChannelHashSet == null) {
-                        throw new RuntimeException("不能找到[" + port + "]端口对应的后端服务");
-                    }
-                    int userSize = 0;
-                    for (UserNatBTPChannel aUserNatBTPChannel : userNatBTPChannelHashSet) {
-                        int size = aUserNatBTPChannel.getUserSize();
-                        if (size <= userSize) {
-                            userNatBTPChannel = aUserNatBTPChannel;
-                            userSize = size;
-                        }
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                } finally {
-                    LOGGER.debug("callable.call，{}", userNatBTPChannel);
-                    if (userNatBTPChannel != null) {
-                        userChannel = userNatBTPChannel.newUserChannel(channel);
-                    }
-                    callable.call(userChannel);
+        UserNatBTPChannel userNatBTPChannel = null;
+        UserNatBTPChannel.UserChannel userChannel = null;
+        try {
+            LOGGER.debug("takeUserToNatChannel#run");
+            int port = localAdd.getPort();
+            HashSet<UserNatBTPChannel> userNatBTPChannelHashSet = userNatChannelMap.get(String.valueOf(port));
+            if (userNatBTPChannelHashSet == null) {
+                channel.close();
+                return;
+            }
+            int userSize = -1;
+            for (UserNatBTPChannel aUserNatBTPChannel : userNatBTPChannelHashSet) {
+                int size = aUserNatBTPChannel.getUserSize();
+                if (userSize == -1) {
+                    userSize = size;
+                }
+                if (size <= userSize) {
+                    userNatBTPChannel = aUserNatBTPChannel;
+                    userSize = size;
                 }
             }
-        };
-        taskExecutor.submit(userToNatTask);
+        } catch (Exception e) {
+            channel.close();
+        } finally {
+            LOGGER.debug("callable.call，{}", userNatBTPChannel);
+            if (userNatBTPChannel != null) {
+                userChannel = userNatBTPChannel.newUserChannel(channel);
+            }
+            callable.call(userChannel);
+        }
     }
 }

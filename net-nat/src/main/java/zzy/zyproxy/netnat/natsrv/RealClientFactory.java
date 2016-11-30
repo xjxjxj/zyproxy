@@ -23,6 +23,7 @@ import java.util.concurrent.Executors;
  */
 public final class RealClientFactory {
     private final static Logger LOGGER = LoggerFactory.getLogger(RealClientFactory.class);
+    private final ClientBootstrap bootstrap;
 
     ExecutorService bossExecutor = Executors.newCachedThreadPool();
     ExecutorService workExecutor = Executors.newCachedThreadPool();
@@ -31,6 +32,11 @@ public final class RealClientFactory {
 
     RealClientFactory(InetSocketAddress natRealAddr) {
         this.natRealAddr = natRealAddr;
+        this.bootstrap = new ClientBootstrap(
+            new NioClientSocketChannelFactory(
+                bossExecutor,
+                workExecutor));
+        bootstrap.setOption("tcpNoDelay", true);
     }
 
     private ChannelPipelineFactory getPipelineFactory(final RealNatBTPChannel.RealChannel realChannel) {
@@ -45,13 +51,7 @@ public final class RealClientFactory {
     }
 
     public ChannelFuture getRealClient(RealNatBTPChannel.RealChannel realChannel) {
-        ClientBootstrap bootstrap = new ClientBootstrap(
-            new NioClientSocketChannelFactory(
-                bossExecutor,
-                workExecutor));
         bootstrap.setPipelineFactory(getPipelineFactory(realChannel));
-        bootstrap.setOption("tcpNoDelay", true);
-
         return bootstrap.connect(natRealAddr);
     }
 }

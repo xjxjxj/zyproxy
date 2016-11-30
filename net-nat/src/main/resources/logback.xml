@@ -29,7 +29,8 @@
     </appender>
 
     <logger name="zzy.zyproxy" level="ERROR"/>
-    <logger name="zzy.zyproxy.core.codec.msgpackcodec" level="INFO"/>
+    <logger name="zzy.zyproxy.core" level="INFO"/>
+    <logger name="zzy.zyproxy.netnat.netsrv.ChannelShare" level="INFO"/>
 
     <root level="INFO">
         <appender-ref ref="DETAIL"/>

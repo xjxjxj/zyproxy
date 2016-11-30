@@ -5,6 +5,7 @@ import org.msgpack.MessagePack;
 import zzy.zyproxy.core.packet.heart.HeartMsg;
 
 import java.util.Arrays;
+import java.util.HashMap;
 
 /**
  * @author zhouzhongyuan
@@ -23,6 +24,11 @@ public class MsgPackUtilTest {
 
     @Test
     public void test0() throws Exception {
-
+        Object o = new Object();
+        HashMap<String, Object> map = new HashMap<String, Object>();
+        map.put("nihao", o);
+        map.remove("nihao");
+        System.out.println(map.get("nihao"));
+        System.out.println(o);
     }
 }

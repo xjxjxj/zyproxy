@@ -4,6 +4,7 @@ import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import zzy.zyproxy.core.channel.ProxyChannel;
 import zzy.zyproxy.netnat.natsrv.channel.RealNatBTPChannel;
 
 /**
@@ -19,23 +20,26 @@ public class RealInboundHandler extends SimpleChannelUpstreamHandler {
         this.realChannel = realChannel;
     }
 
+    private RealNatBTPChannel.RealChannel flushChannel(Channel channel) {
+        return realChannel == null ? null : realChannel.flushChannel(channel);
+    }
+
     @Override
     public void channelOpen(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
         final Channel channel = ctx.getChannel();
-        realChannel.flushChannel(channel);
+        flushChannel(channel);
         channel.setReadable(false);
     }
 
     @Override
     public void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
         final Channel channel = ctx.getChannel();
-        realChannel.flushChannel(channel);
-        realChannel
+        flushChannel(channel)
             .writeRealConnected()
             .addListener(new ChannelFutureListener() {
                 public void operationComplete(ChannelFuture future) throws Exception {
                     if (!future.isSuccess()) {
-                        channel.close();
+                        ProxyChannel.closea(channel);
                         return;
                     }
                     LOGGER.debug("writeConnected & setReadable true");
@@ -44,6 +48,7 @@ public class RealInboundHandler extends SimpleChannelUpstreamHandler {
             });
         LOGGER.debug("channelOpen & setReadable false,remote address:{}", channel.getRemoteAddress());
     }
+
 
     @Override
     public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
@@ -58,8 +63,7 @@ public class RealInboundHandler extends SimpleChannelUpstreamHandler {
         buffer.readBytes(bytes);
         channel.setReadable(false);
         LOGGER.debug("真实服务器client接受到信息，【开始】发送给BTP，并且setReadable false");
-        realChannel
-            .flushChannel(channel)
+        flushChannel(channel)
             .writeToNatBTP(bytes)
             .addListener(new ChannelFutureListener() {
                 public void operationComplete(ChannelFuture channelFuture) throws Exception {
@@ -67,7 +71,7 @@ public class RealInboundHandler extends SimpleChannelUpstreamHandler {
                         channel.setReadable(true);
                         LOGGER.debug("真实服务器client接受到信息，发送给BTP【成功】，并且setReadable true");
                     } else {
-                        realChannel.close();
+                        ProxyChannel.closea(channel);
                     }
                 }
             });
@@ -75,9 +79,11 @@ public class RealInboundHandler extends SimpleChannelUpstreamHandler {
 
     @Override
     public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-        realChannel
-            .flushChannel(ctx.getChannel())
-            .writeRealChannelClosed();
+        RealNatBTPChannel.RealChannel realChannel = flushChannel(ctx.getChannel());
+        if (realChannel != null) {
+            realChannel
+                .writeRealChannelClosed();
+        }
     }
 
     @Override

@@ -16,6 +16,6 @@ public abstract class ChannelPiplineUtil {
     }
 
     public static void addInfo(ChannelPipeline channelPipeline) {
-//        channelPipeline.addLast("logger", new LoggingHandler(InternalLogLevel.WARN));
+//        channelPipeline.addLast("logger", new LoggingHandler(InternalLogLevel.ERROR));
     }
 }

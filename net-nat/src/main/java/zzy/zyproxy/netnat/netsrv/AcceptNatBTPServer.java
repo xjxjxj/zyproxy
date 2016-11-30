@@ -45,7 +45,7 @@ public final class AcceptNatBTPServer extends AcceptServer {
             public ChannelPipeline getPipeline() throws Exception {
                 ChannelPipeline pipeline = Channels.pipeline();
                 HeartMsgCodecFactory.addDecoderAtLast(pipeline);
-//                ChannelPiplineUtil.addInfo(pipeline);
+                ChannelPiplineUtil.addInfo(pipeline);
                 ChannelPiplineUtil.addLast(pipeline,
                     new IdleStateHandler(timer, allIdleTimeSeconds / 2, allIdleTimeSeconds / 2, allIdleTimeSeconds),
                     new AcceptNatBTPInboundHandler(channelShare)

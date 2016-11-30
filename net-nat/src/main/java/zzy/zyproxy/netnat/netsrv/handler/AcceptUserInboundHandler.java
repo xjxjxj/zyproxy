@@ -4,6 +4,7 @@ import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import zzy.zyproxy.core.channel.ProxyChannel;
 import zzy.zyproxy.netnat.netsrv.ChannelShare;
 import zzy.zyproxy.netnat.netsrv.channel.UserNatBTPChannel;
 
@@ -24,6 +25,10 @@ public class AcceptUserInboundHandler extends SimpleChannelUpstreamHandler {
         this.channelShare = channelShare;
     }
 
+    private UserNatBTPChannel.UserChannel flushChannel(Channel channel) {
+        return userChannel == null ? null : userChannel.flushChannel(channel);
+    }
+
     @Override
     public void channelOpen(final ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
         final Channel channel = e.getChannel();
@@ -33,24 +38,26 @@ public class AcceptUserInboundHandler extends SimpleChannelUpstreamHandler {
                 public void operationComplete(ChannelFuture future) throws Exception {
                     if (!future.isSuccess()) {
                         LOGGER.debug("channel.setReadable(false)#isSuccess");
-                        channel.close();
+                        ProxyChannel.closea(channel);
+
                         return;
                     }
                     SocketAddress localAddress = channel.getLocalAddress();
                     if (!(localAddress instanceof InetSocketAddress)) {
-                        channel.close();
+                        ProxyChannel.closea(channel);
+
                         return;
                     }
                     InetSocketAddress localAdd = (InetSocketAddress) localAddress;
-                    channelShare.takeUserToNatChannel(channel,localAdd,
+                    channelShare.takeUserToNatChannel(channel, localAdd,
                         new ChannelShare.takeUserToNatChannelCallable() {
                             public void call(UserNatBTPChannel.UserChannel userChannel0) {
                                 if (userChannel0 == null) {
-                                    channel.close();
+                                    ProxyChannel.closea(channel);
                                     return;
                                 }
                                 userChannel = userChannel0;
-                                userChannel.flushChannel(channel);
+                                flushChannel(channel);
                                 if (channelConnectedTask != null) {
                                     channelConnectedTask.run();
                                 }
@@ -61,6 +68,7 @@ public class AcceptUserInboundHandler extends SimpleChannelUpstreamHandler {
             });
     }
 
+
     @Override
     public void channelConnected(final ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
         final Channel channel = ctx.getChannel();
@@ -68,23 +76,25 @@ public class AcceptUserInboundHandler extends SimpleChannelUpstreamHandler {
             public void run() {
                 try {
                     if (userChannel == null) {
-                        channel.close();
+                        ProxyChannel.closea(channel);
+
                         return;
                     }
-                    userChannel.flushChannel(channel);
                     LOGGER.debug("UserChannelwriteChannelConnected#runable");
-                    userChannel.writeConnected(new Runnable() {
+                    flushChannel(channel).writeConnected(new Runnable() {
                         public void run() {
                             try {
                                 LOGGER.debug("UserChannelwriteChannelConnected#runable#writeConnected call back and setReadable true");
                                 channel.setReadable(true);
                             } catch (Exception e) {
-                                e.printStackTrace();
+                                ProxyChannel.closea(channel);
+
                             }
                         }
                     });
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    ProxyChannel.closea(channel);
+
                 }
             }
         };
@@ -108,8 +118,7 @@ public class AcceptUserInboundHandler extends SimpleChannelUpstreamHandler {
         buffer.readBytes(bytes);
         channel.setReadable(false);
         LOGGER.debug("从用户端read数据【开始】写到NatBTP中 channel.setReadable(false)");
-        userChannel
-            .flushChannel(channel)
+        flushChannel(channel)
             .writeToNatBTP(bytes)
             .addListener(new ChannelFutureListener() {
                 public void operationComplete(ChannelFuture channelFuture) throws Exception {
@@ -117,18 +126,20 @@ public class AcceptUserInboundHandler extends SimpleChannelUpstreamHandler {
                         LOGGER.debug("从用户端read数据【成功】写到NatBTP中  channel.setReadable(true)");
                         channel.setReadable(true);
                     } else {
-                        userChannel.close();
+                        ProxyChannel.closea(channel);
+
                     }
                 }
             });
     }
 
+
     @Override
     public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-        LOGGER.debug("writeUserChannelClosed");
-        userChannel.flushChannel(ctx.getChannel()).writeUserChannelClosed();
-        Channel channel = ctx.getChannel();
-        LOGGER.warn("channelClosed:{}:{}:{}:{}:{}--{}", channel.isBound(), channel.isWritable(), channel.isConnected(), channel.isOpen(), channel.isReadable(), System.currentTimeMillis());
+        UserNatBTPChannel.UserChannel userChannel = flushChannel(ctx.getChannel());
+        if (userChannel != null) {
+            userChannel.writeUserChannelClosed();
+        }
     }
 
 
@@ -136,11 +147,6 @@ public class AcceptUserInboundHandler extends SimpleChannelUpstreamHandler {
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
         Channel channel = ctx.getChannel();
-        LOGGER.warn("exceptionCaught:{}:{}:{}:{}:{}--{}",channel.isBound(),channel.isWritable(),channel.isConnected(),channel.isOpen(),channel.isReadable(),System.currentTimeMillis());
-    }
-
-    @Override
-    public void writeComplete(ChannelHandlerContext ctx, WriteCompletionEvent e) throws Exception {
-        LOGGER.debug("writeComplete");
+        LOGGER.warn("exceptionCaught:{}:{}:{}:{}:{}--{}", channel.isBound(), channel.isWritable(), channel.isConnected(), channel.isOpen(), channel.isReadable(), System.currentTimeMillis());
     }
 }
