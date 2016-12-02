@@ -22,6 +22,7 @@ public class AcceptNatBTPInboundHandler extends SimpleChannelUpstreamHandler {
     public AcceptNatBTPInboundHandler(ChannelShare channelShare) {
         this.channelShare = channelShare;
         userNatBTPChannel = new UserNatBTPChannel(null);
+        System.out.println(userNatBTPChannel);
     }
 
     private UserNatBTPChannel flushNatBTPChannel(Channel channel) {

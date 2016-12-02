@@ -3,6 +3,7 @@ package zzy.zyproxy.netnat.netsrv;
 import org.jboss.netty.channel.Channel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import zzy.zyproxy.core.util.Balancer;
 import zzy.zyproxy.core.util.ChannelUtil;
 import zzy.zyproxy.netnat.netsrv.channel.UserNatBTPChannel;
 
@@ -10,6 +11,7 @@ import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author zhouzhongyuan
@@ -25,6 +27,7 @@ public class ChannelShare {
 
     private volatile HashMap<String, HashSet<UserNatBTPChannel>> userNatChannelMap
         = new HashMap<String, HashSet<UserNatBTPChannel>>();
+    Balancer balancer = new Balancer();
 
     public synchronized void addUserNatBTPChannel(final UserNatBTPChannel userNatBTPChannel, final int acptUserPort) {
         final String port = String.valueOf(acptUserPort);
@@ -52,6 +55,18 @@ public class ChannelShare {
     public void takeUserToNatChannel(final Channel channel,
                                      final InetSocketAddress localAdd,
                                      final takeUserToNatChannelCallable callable) {
+        Runnable runnable = new Runnable() {
+            public void run() {
+                takeUserToNatChannel0(channel, localAdd, callable);
+            }
+        };
+        taskExecutor.execute(runnable);
+
+    }
+
+    private void takeUserToNatChannel0(final Channel channel,
+                                       final InetSocketAddress localAdd,
+                                       final takeUserToNatChannelCallable callable) {
         UserNatBTPChannel userNatBTPChannel = null;
         UserNatBTPChannel.UserChannel userChannel = null;
         try {
@@ -62,17 +77,8 @@ public class ChannelShare {
                 ChannelUtil.closeOnFlush(channel);
                 return;
             }
-            int userSize = -1;
-            for (UserNatBTPChannel aUserNatBTPChannel : userNatBTPChannelHashSet) {
-                int size = aUserNatBTPChannel.getUserSize();
-                if (userSize == -1) {
-                    userSize = size;
-                }
-                if (size <= userSize) {
-                    userNatBTPChannel = aUserNatBTPChannel;
-                    userSize = size;
-                }
-            }
+
+            userNatBTPChannel = balancer.roundRobin(userNatBTPChannelHashSet);
         } catch (Exception e) {
             channel.close();
         } finally {

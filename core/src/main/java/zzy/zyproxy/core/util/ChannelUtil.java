@@ -24,7 +24,7 @@ public class ChannelUtil {
                     }
                 });
             } else {
-                Channels.close(channel);
+                channel.close();
             }
         }
     }
