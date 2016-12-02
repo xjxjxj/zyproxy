@@ -2,10 +2,9 @@ package zzy.zyproxy.core.channel;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.jboss.netty.buffer.ChannelBufferFactory;
-import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
-import org.jboss.netty.channel.ChannelFutureListener;
+import zzy.zyproxy.core.util.ChannelUtil;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -28,16 +27,10 @@ public abstract class ProxyChannel<CT, MT> {
         this.channel = channel;
     }
 
-    public static void closea(Channel channel) {
-        if (channel != null) {
-            if (channel.isConnected()) {
-                channel.write(ChannelBuffers.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
-            }
-        }
-    }
-
     public void close0() {
-        closea(this.channel);
+        if (channel != null) {
+            ChannelUtil.closeOnFlush(channel);
+        }
     }
 
     public Channel getChannel() {

@@ -111,8 +111,7 @@ public class NatBTPInboundHandler extends SimpleChannelUpstreamHandler {
         LOGGER.debug("msgUserConnected");
         //new realChannel 稍后进行channel刷新
         RealNatBTPChannel.RealChannel realChannel = realNatBTPChannel.newRealChannel(connected.getUserCode());
-        ChannelFuture realClient = realClientFactory.getRealClient(realChannel);
-        realChannel.flushChannel(realClient.getChannel());
+        realClientFactory.createRealClient(realChannel);
     }
 
     @Override

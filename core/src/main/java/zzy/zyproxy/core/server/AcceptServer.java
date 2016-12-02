@@ -6,6 +6,7 @@ import org.jboss.netty.channel.ChannelFactory;
 import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import zzy.zyproxy.core.util.ChannelUtil;
 
 import java.net.SocketAddress;
 import java.util.HashMap;
@@ -41,7 +42,7 @@ public abstract class AcceptServer {
             e.printStackTrace();
         } finally {
             if (channel != null) {
-                channel.close();
+                ChannelUtil.closeOnFlush(channel);
             }
             stop();
         }

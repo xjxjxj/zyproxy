@@ -4,7 +4,7 @@ import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import zzy.zyproxy.core.channel.ProxyChannel;
+import zzy.zyproxy.core.util.ChannelUtil;
 import zzy.zyproxy.netnat.natsrv.channel.RealNatBTPChannel;
 
 /**
@@ -16,8 +16,9 @@ public class RealInboundHandler extends SimpleChannelUpstreamHandler {
 
     private RealNatBTPChannel.RealChannel realChannel;
 
-    public RealInboundHandler(RealNatBTPChannel.RealChannel realChannel) {
+    public RealInboundHandler setRealChannel(RealNatBTPChannel.RealChannel realChannel) {
         this.realChannel = realChannel;
+        return this;
     }
 
     private RealNatBTPChannel.RealChannel flushChannel(Channel channel) {
@@ -39,7 +40,7 @@ public class RealInboundHandler extends SimpleChannelUpstreamHandler {
             .addListener(new ChannelFutureListener() {
                 public void operationComplete(ChannelFuture future) throws Exception {
                     if (!future.isSuccess()) {
-                        ProxyChannel.closea(channel);
+                        ChannelUtil.closeOnFlush(channel);
                         return;
                     }
                     LOGGER.debug("writeConnected & setReadable true");
@@ -71,7 +72,7 @@ public class RealInboundHandler extends SimpleChannelUpstreamHandler {
                         channel.setReadable(true);
                         LOGGER.debug("真实服务器client接受到信息，发送给BTP【成功】，并且setReadable true");
                     } else {
-                        ProxyChannel.closea(channel);
+                        ChannelUtil.closeOnFlush(channel);
                     }
                 }
             });
@@ -89,6 +90,9 @@ public class RealInboundHandler extends SimpleChannelUpstreamHandler {
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
         Channel channel = ctx.getChannel();
-        LOGGER.error("channelClosed:{}:{}:{}:{}:{}--{}", channel.isBound(), channel.isWritable(), channel.isConnected(), channel.isOpen(), channel.isReadable(), System.currentTimeMillis());
+        LOGGER.error("channelClosed Message:{} |isBound: {} |isWritable:{} |isConnected:{} |isOpen:{} |isReadable:{} |时间--{}",
+            e,
+            channel.isBound(),
+            channel.isWritable(), channel.isConnected(), channel.isOpen(), channel.isReadable(), System.currentTimeMillis());
     }
 }

@@ -27,6 +27,11 @@
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.xsocket</groupId>
+            <artifactId>xSocket-multiplexed</artifactId>
+            <version>2.1.7</version>
+        </dependency>
     </dependencies>
     <dependencyManagement>
         <dependencies>

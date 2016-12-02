@@ -4,7 +4,7 @@ import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import zzy.zyproxy.core.channel.ProxyChannel;
+import zzy.zyproxy.core.util.ChannelUtil;
 import zzy.zyproxy.netnat.netsrv.ChannelShare;
 import zzy.zyproxy.netnat.netsrv.channel.UserNatBTPChannel;
 
@@ -38,14 +38,12 @@ public class AcceptUserInboundHandler extends SimpleChannelUpstreamHandler {
                 public void operationComplete(ChannelFuture future) throws Exception {
                     if (!future.isSuccess()) {
                         LOGGER.debug("channel.setReadable(false)#isSuccess");
-                        ProxyChannel.closea(channel);
-
+                        ChannelUtil.closeOnFlush(channel);
                         return;
                     }
                     SocketAddress localAddress = channel.getLocalAddress();
                     if (!(localAddress instanceof InetSocketAddress)) {
-                        ProxyChannel.closea(channel);
-
+                        ChannelUtil.closeOnFlush(channel);
                         return;
                     }
                     InetSocketAddress localAdd = (InetSocketAddress) localAddress;
@@ -53,7 +51,7 @@ public class AcceptUserInboundHandler extends SimpleChannelUpstreamHandler {
                         new ChannelShare.takeUserToNatChannelCallable() {
                             public void call(UserNatBTPChannel.UserChannel userChannel0) {
                                 if (userChannel0 == null) {
-                                    ProxyChannel.closea(channel);
+                                    ChannelUtil.closeOnFlush(channel);
                                     return;
                                 }
                                 userChannel = userChannel0;
@@ -76,8 +74,7 @@ public class AcceptUserInboundHandler extends SimpleChannelUpstreamHandler {
             public void run() {
                 try {
                     if (userChannel == null) {
-                        ProxyChannel.closea(channel);
-
+                        ChannelUtil.closeOnFlush(channel);
                         return;
                     }
                     LOGGER.debug("UserChannelwriteChannelConnected#runable");
@@ -87,14 +84,12 @@ public class AcceptUserInboundHandler extends SimpleChannelUpstreamHandler {
                                 LOGGER.debug("UserChannelwriteChannelConnected#runable#writeConnected call back and setReadable true");
                                 channel.setReadable(true);
                             } catch (Exception e) {
-                                ProxyChannel.closea(channel);
-
+                                ChannelUtil.closeOnFlush(channel);
                             }
                         }
                     });
                 } catch (Exception e) {
-                    ProxyChannel.closea(channel);
-
+                    ChannelUtil.closeOnFlush(channel);
                 }
             }
         };
@@ -126,8 +121,7 @@ public class AcceptUserInboundHandler extends SimpleChannelUpstreamHandler {
                         LOGGER.debug("从用户端read数据【成功】写到NatBTP中  channel.setReadable(true)");
                         channel.setReadable(true);
                     } else {
-                        ProxyChannel.closea(channel);
-
+                        ChannelUtil.closeOnFlush(channel);
                     }
                 }
             });

@@ -3,6 +3,7 @@ package zzy.zyproxy.netnat.netsrv;
 import org.jboss.netty.channel.Channel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import zzy.zyproxy.core.util.ChannelUtil;
 import zzy.zyproxy.netnat.netsrv.channel.UserNatBTPChannel;
 
 import java.net.InetSocketAddress;
@@ -58,7 +59,7 @@ public class ChannelShare {
             int port = localAdd.getPort();
             HashSet<UserNatBTPChannel> userNatBTPChannelHashSet = userNatChannelMap.get(String.valueOf(port));
             if (userNatBTPChannelHashSet == null) {
-                channel.close();
+                ChannelUtil.closeOnFlush(channel);
                 return;
             }
             int userSize = -1;
