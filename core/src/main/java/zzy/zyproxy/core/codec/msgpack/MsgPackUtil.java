@@ -16,24 +16,10 @@ public abstract class MsgPackUtil {
     private static MsgPackUtil instance = new MsgPackUtil() {
     };
 
-    private Set<Class> messagePackClazzs = new HashSet<Class>();
     private MessagePack msgpacker = new MessagePack();
 
 
     private MsgPackUtil() {
-    }
-
-    @SuppressWarnings("unchecked")
-    public void register0(Class objClazz) {
-        if (!messagePackClazzs.contains(objClazz)) {
-            if (objClazz.getEnumConstants() != null) {
-                OrdinalEnumTemplate ordinalEnumTemplate = new OrdinalEnumTemplate(objClazz);
-                msgpacker.register(objClazz, ordinalEnumTemplate);
-            } else {
-                msgpacker.register(objClazz);
-            }
-            messagePackClazzs.add(objClazz);
-        }
     }
 
     public static MessagePack getMsgpacker() {
