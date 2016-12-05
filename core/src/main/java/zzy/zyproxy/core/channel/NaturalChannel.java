@@ -20,5 +20,14 @@ public abstract class NaturalChannel extends ProxyChannel {
     public void flushBTPChannel(BTPChannel btpChannel) {
         this.btpChannel = btpChannel;
     }
-    
+
+    public abstract ChannelFuture writeToBTPChannelConnected(String userCode);
+
+    public abstract ChannelFuture writeToBTPChannelTransmit(String userCode, byte[] msgBody);
+
+    public abstract ChannelFuture writeToBTPChannelClose(String userCode);
+
+    public BTPChannel BTPChannel() {
+        return btpChannel;
+    }
 }

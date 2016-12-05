@@ -4,56 +4,25 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import zzy.zyproxy.core.channel.NaturalChannel;
+import zzy.zyproxy.core.handler.NaturalInboundHandler;
 import zzy.zyproxy.core.packet.ProxyPacket;
+import zzy.zyproxy.core.util.SharaChannels;
 
 /**
  * @author zhouzhongyuan
  * @date 2016/12/3
  */
-public class AcceptUserInboundHandler extends SimpleChannelInboundHandler<ProxyPacket> {
+public class AcceptUserInboundHandler extends NaturalInboundHandler {
     private final static Logger LOGGER = LoggerFactory.getLogger(AcceptUserInboundHandler.class);
-    
-    protected void channelRead0(ChannelHandlerContext ctx, ProxyPacket msg) throws Exception {
-        
+
+    public AcceptUserInboundHandler(NaturalChannel naturalChannel, SharaChannels sharaChannels) {
+        super(naturalChannel, sharaChannels);
     }
 
     @Override
-    public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
-        super.channelRegistered(ctx);
-    }
-
-    @Override
-    public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
-        super.channelUnregistered(ctx);
-    }
-
-    @Override
-    public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        super.channelActive(ctx);
-    }
-
-    @Override
-    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        super.channelInactive(ctx);
-    }
-
-    @Override
-    public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
-        super.channelReadComplete(ctx);
-    }
-
-    @Override
-    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
-        super.userEventTriggered(ctx, evt);
-    }
-
-    @Override
-    public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
-        super.channelWritabilityChanged(ctx);
-    }
-
-    @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        super.exceptionCaught(ctx, cause);
+    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+//        ctx.executor().inEventLoop()
+        super.channelRead(ctx, msg);
     }
 }

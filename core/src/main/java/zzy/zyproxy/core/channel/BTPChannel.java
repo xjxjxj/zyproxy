@@ -10,7 +10,6 @@ import java.util.HashMap;
 /**
  * @author zhouzhongyuan
  * @date 2016/12/2
- * PT ProxyPacket Type
  */
 public abstract class BTPChannel extends ProxyChannel {
     private final static Logger LOGGER = LoggerFactory.getLogger(BTPChannel.class);
