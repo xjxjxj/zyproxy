@@ -15,12 +15,10 @@ import zzy.zyproxy.core.util.SharaChannels;
 public abstract class BTPInboundHandler extends SimpleChannelInboundHandler<ProxyPacket> {
     private final static Logger LOGGER = LoggerFactory.getLogger(BTPInboundHandler.class);
     private final BTPChannel btpChannel;
-    private final SharaChannels sharaChannels;
 
-    protected BTPInboundHandler(BTPChannel btpChannel, SharaChannels sharaChannels) {
+    protected BTPInboundHandler(BTPChannel btpChannel) {
         super();
         this.btpChannel = btpChannel;
-        this.sharaChannels = sharaChannels;
     }
 
     protected BTPChannel flushBTPChannel(ChannelHandlerContext ctx) {
@@ -28,9 +26,7 @@ public abstract class BTPInboundHandler extends SimpleChannelInboundHandler<Prox
         return btpChannel;
     }
 
-    protected SharaChannels sharaChannels() {
-        return sharaChannels;
-    }
+    
 
     protected void channelRead0(ChannelHandlerContext ctx, ProxyPacket msg) throws Exception {
         BTPChannel btpChannel = flushBTPChannel(ctx);

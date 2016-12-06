@@ -15,6 +15,7 @@ public class ProxyConfig {
 
     private Map<InetSocketAddress, InetSocketAddress> acceptUserToRealAddrMap;
     private InetSocketAddress acceptBTPAddr;
+    private String auth;
 
     public Map<InetSocketAddress, InetSocketAddress> getAcceptUserToRealAddrMap() {
         return acceptUserToRealAddrMap;
@@ -32,5 +33,13 @@ public class ProxyConfig {
     public ProxyConfig setAcceptBTPAddr(InetSocketAddress acceptBTPAddr) {
         this.acceptBTPAddr = acceptBTPAddr;
         return this;
+    }
+
+    public String getAuth() {
+        return auth;
+    }
+
+    public void setAuth(String auth) {
+        this.auth = auth;
     }
 }

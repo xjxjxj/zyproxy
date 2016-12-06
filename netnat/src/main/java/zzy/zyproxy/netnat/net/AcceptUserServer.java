@@ -38,9 +38,8 @@ public class AcceptUserServer extends AcceptServer {
 
     public void start() {
         try {
-            LOGGER.info("AcceptUserServer bootstrap@port: {}", bindAddr.getPort());
-
             ChannelFuture channelFuture = bootstrap(bindAddr);
+            LOGGER.info("AcceptUserServer bootstrap@port: {}", bindAddr.getPort());
             channelFuture.channel().closeFuture().sync();
         } catch (InterruptedException e) {
             e.printStackTrace();

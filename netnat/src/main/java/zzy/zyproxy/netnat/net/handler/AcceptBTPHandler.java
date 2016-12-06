@@ -14,9 +14,15 @@ import zzy.zyproxy.core.util.SharaChannels;
  */
 public class AcceptBTPHandler extends BTPInboundHandler {
     private final static Logger LOGGER = LoggerFactory.getLogger(AcceptBTPHandler.class);
+    private final SharaChannels sharaChannels;
 
     public AcceptBTPHandler(BTPChannel btpChannel, SharaChannels sharaChannels) {
-        super(btpChannel, sharaChannels);
+        super(btpChannel);
+        this.sharaChannels = sharaChannels;
+    }
+
+    protected SharaChannels sharaChannels() {
+        return sharaChannels;
     }
 
     protected void channelReadAuth(BTPChannel btpChannel, ProxyPacket.Auth msg) {
@@ -31,14 +37,14 @@ public class AcceptBTPHandler extends BTPInboundHandler {
 
     protected void channelReadTransmit(BTPChannel btpChannel, ProxyPacket.Transmit msg) {
         NaturalChannel naturalChannel =
-            btpChannel.getNaturalChannel(msg.getUserCode());
+                btpChannel.getNaturalChannel(msg.getUserCode());
         naturalChannel.flushBTPChannel(btpChannel);
         naturalChannel.writeMsgAndFlush(msg.getBody());
     }
 
     protected void channelReadClose(BTPChannel btpChannel, ProxyPacket.Close msg) {
         NaturalChannel naturalChannel =
-            btpChannel.getNaturalChannel(msg.getUserCode());
+                btpChannel.getNaturalChannel(msg.getUserCode());
         naturalChannel.flushBTPChannel(btpChannel);
         naturalChannel.closeChannel();
     }

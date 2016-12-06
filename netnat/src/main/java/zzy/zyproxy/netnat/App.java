@@ -22,14 +22,19 @@ public class App {
         InetSocketAddress aceptBTPchannel = new InetSocketAddress("127.0.0.1", 8858);
         proxyConfig.setAcceptUserToRealAddrMap(user2real);
         proxyConfig.setAcceptBTPAddr(aceptBTPchannel);
+        proxyConfig.setAuth("nihao-3307");
     }
 
     public static void main(String[] args) throws InterruptedException {
         App app = new App();
-        app.startAcetpBTPServer(proxyConfig);
+        final NatSharaChannels natSharaChannels = new NatSharaChannels();
+
+        app.startAcetpBTPServer(proxyConfig, natSharaChannels);
+
 //        app.startAcetpServer(proxyConfig);
 //        Thread.sleep(2000);
 //        app.startClient(proxyConfig);
+
         synchronized (App.class) {
             try {
                 App.class.wait();
@@ -39,8 +44,7 @@ public class App {
 
     }
 
-    public void startAcetpBTPServer(ProxyConfig proxyConfig) {
-        final NatSharaChannels natSharaChannels = new NatSharaChannels();
+    public void startAcetpBTPServer(ProxyConfig proxyConfig, final NatSharaChannels natSharaChannels) {
         final InetSocketAddress acceptBTPchannelAddr = proxyConfig.getAcceptBTPAddr();
         new Thread() {
             @Override
@@ -54,13 +58,14 @@ public class App {
         }.start();
     }
 
-    public void startAcetpServer(ProxyConfig proxyConfig) {
+    public void startAcetpServer(ProxyConfig proxyConfig, final NatSharaChannels natSharaChannels) {
         Map<InetSocketAddress, InetSocketAddress> acceptUserToRealAddrMap = proxyConfig.getAcceptUserToRealAddrMap();
         for (final Map.Entry<InetSocketAddress, InetSocketAddress> entry : acceptUserToRealAddrMap.entrySet()) {
+            final InetSocketAddress aceptUserAddr = entry.getKey();
             new Thread() {
                 @Override
                 public void run() {
-                    AcceptUserServer acceptUserServer = new AcceptUserServer(entry.getKey());
+                    AcceptUserServer acceptUserServer = new AcceptUserServer(aceptUserAddr, natSharaChannels);
                     acceptUserServer.start();
                 }
             }.start();
@@ -68,14 +73,18 @@ public class App {
     }
 
     public void startClient(final ProxyConfig proxyConfig) {
-        Map<InetSocketAddress, InetSocketAddress> acceptUserToRealAddrMap = proxyConfig.getAcceptUserToRealAddrMap();
+        Map<InetSocketAddress, InetSocketAddress> acceptUserToRealAddrMap
+                = proxyConfig.getAcceptUserToRealAddrMap();
+        final String auth = proxyConfig.getAuth();
         for (final Map.Entry<InetSocketAddress, InetSocketAddress> entry : acceptUserToRealAddrMap.entrySet()) {
+            final InetSocketAddress realAddr = entry.getValue();
             new Thread() {
                 @Override
                 public void run() {
                     NatChannelClient natBTPClient = new NatChannelClient(
-                        proxyConfig.getAcceptBTPAddr(),
-                        entry.getValue()
+                            proxyConfig.getAcceptBTPAddr(),
+                            realAddr,
+                            auth
                     );
                     natBTPClient.start();
                 }
