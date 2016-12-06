@@ -14,11 +14,12 @@ import java.net.InetSocketAddress;
  * @author zhouzhongyuan
  * @date 2016/12/5
  */
-public abstract class BTPChannelClient {
-    private final static Logger LOGGER = LoggerFactory.getLogger(BTPChannelClient.class);
+public abstract class ChannelClient {
+    private final static Logger LOGGER = LoggerFactory.getLogger(ChannelClient.class);
+    EventLoopGroup group;
 
     protected ChannelFuture bootstrap(InetSocketAddress connectAddr) throws InterruptedException {
-        EventLoopGroup group = new NioEventLoopGroup();
+        group = new NioEventLoopGroup();
         Bootstrap bootstrap = new Bootstrap().group(group)
             .channel(NioSocketChannel.class)
             .option(ChannelOption.TCP_NODELAY, true)
@@ -28,6 +29,12 @@ public abstract class BTPChannelClient {
     }
 
     protected abstract ChannelInitializer<SocketChannel> handler();
+
+    protected void shutdown() {
+        if (group != null) {
+            group.shutdownGracefully();
+        }
+    }
 
     public abstract void start();
 }

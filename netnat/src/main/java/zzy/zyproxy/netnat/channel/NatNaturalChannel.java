@@ -13,27 +13,27 @@ import zzy.zyproxy.core.channel.NaturalChannel;
 public class NatNaturalChannel extends NaturalChannel {
     private final static Logger LOGGER = LoggerFactory.getLogger(NatNaturalChannel.class);
 
-    public ChannelFuture writeToBTPChannelConnected(String userCode) {
+    public ChannelFuture writeToBTPChannelConnected() {
         BTPChannel btpChannel = BTPChannel();
         if (btpChannel == null) {
             return null;
         }
-        return btpChannel.writeConnected(userCode);
+        return btpChannel.writeConnected(userCode());
     }
 
-    public ChannelFuture writeToBTPChannelTransmit(String userCode, byte[] msgBody) {
+    public ChannelFuture writeToBTPChannelTransmit(byte[] msgBody) {
         BTPChannel btpChannel = BTPChannel();
         if (btpChannel == null) {
             return null;
         }
-        return btpChannel.writeTransmit(userCode, msgBody);
+        return btpChannel.writeTransmit(userCode(), msgBody);
     }
 
-    public ChannelFuture writeToBTPChannelClose(String userCode) {
+    public ChannelFuture writeToBTPChannelClose() {
         BTPChannel btpChannel = BTPChannel();
         if (btpChannel == null) {
             return null;
         }
-        return btpChannel.writeClose(userCode);
+        return btpChannel.writeClose(userCode());
     }
 }

@@ -1,7 +1,9 @@
 package zzy.zyproxy.core.channel;
 
 import io.netty.buffer.Unpooled;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelHandlerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,22 +14,62 @@ import org.slf4j.LoggerFactory;
 public abstract class NaturalChannel extends ProxyChannel {
     private final static Logger LOGGER = LoggerFactory.getLogger(NaturalChannel.class);
     private BTPChannel btpChannel;
+    private Runnable realConnectedEvent;
+    private String userCode;
 
-    protected ChannelFuture writeAndFlush(byte[] msg) {
-        return channel().writeAndFlush(Unpooled.wrappedBuffer(msg));
+    public NaturalChannel() {
+        this(null);
+    }
+
+    public NaturalChannel(ChannelHandlerContext ctx) {
+        super(ctx);
+        if (ctx != null) {
+            flushUserCode(ctx.channel());
+        }
     }
 
     public void flushBTPChannel(BTPChannel btpChannel) {
         this.btpChannel = btpChannel;
     }
 
-    public abstract ChannelFuture writeToBTPChannelConnected(String userCode);
+    public String userCode() {
+        return userCode;
+    }
 
-    public abstract ChannelFuture writeToBTPChannelTransmit(String userCode, byte[] msgBody);
+    private void flushUserCode(Channel channel) {
+        userCode = String.valueOf(channel.hashCode());
+    }
 
-    public abstract ChannelFuture writeToBTPChannelClose(String userCode);
+    @Override
+    public void flushChannelHandlerContext(ChannelHandlerContext ctx) {
+        super.flushChannelHandlerContext(ctx);
+        flushUserCode(ctx.channel());
+    }
+
+    public abstract ChannelFuture writeToBTPChannelConnected();
+
+    public abstract ChannelFuture writeToBTPChannelTransmit(byte[] msgBody);
+
+    public abstract ChannelFuture writeToBTPChannelClose();
 
     public BTPChannel BTPChannel() {
         return btpChannel;
+    }
+
+    //========================
+    //从BTPChannel处理调用的方法
+    //========================
+    public ChannelFuture closeChannel() {
+        return flushAndClose();
+    }
+
+    public ChannelFuture writeMsgAndFlush(byte[] msg) {
+        return super.writeAndFlush(Unpooled.wrappedBuffer(msg));
+    }
+
+    public void realConnected() {
+        if (realConnectedEvent != null) {
+            realConnectedEvent.run();
+        }
     }
 }

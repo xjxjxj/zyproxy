@@ -32,7 +32,6 @@
     <logger name="com" level="INFO"/>
 
     <logger name="zzy" level="DEBUG"/>
-    <!--<LOGGER name="org.littleshoot.proxy" level="DEBUG"/>-->
 
     <root level="DEBUG">
         <appender-ref ref="CONSOLE"/>

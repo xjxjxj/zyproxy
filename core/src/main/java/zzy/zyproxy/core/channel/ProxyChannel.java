@@ -1,28 +1,39 @@
 package zzy.zyproxy.core.channel;
 
-import io.netty.channel.Channel;
+
+import io.netty.buffer.Unpooled;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * @author zhouzhongyuan
  * @date 2016/12/4
  */
-public abstract class ProxyChannel {
-    private Channel channel;
+public class ProxyChannel {
+    private ChannelHandlerContext ctx;
 
     public ProxyChannel() {
         this(null);
     }
 
-    public ProxyChannel(Channel channel) {
-        this.channel = channel;
+    public ProxyChannel(ChannelHandlerContext ctx) {
+        this.ctx = ctx;
     }
 
-    public Channel channel() {
-        return channel;
+    public ChannelHandlerContext channelHandlerContext() {
+        return ctx;
     }
 
-    public void flushChannel(Channel channel) {
-        this.channel = channel;
+    public void flushChannelHandlerContext(ChannelHandlerContext ctx) {
+        this.ctx = ctx;
     }
-    
+
+    protected ChannelFuture writeAndFlush(Object msg) {
+        return ctx.writeAndFlush(msg);
+    }
+
+    protected ChannelFuture flushAndClose() {
+        return writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
+    }
 }

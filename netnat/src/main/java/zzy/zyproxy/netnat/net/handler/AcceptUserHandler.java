@@ -1,23 +1,23 @@
 package zzy.zyproxy.netnat.net.handler;
 
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import zzy.zyproxy.core.channel.NaturalChannel;
 import zzy.zyproxy.core.handler.NaturalInboundHandler;
-import zzy.zyproxy.core.packet.ProxyPacket;
 import zzy.zyproxy.core.util.SharaChannels;
+import zzy.zyproxy.netnat.channel.NatNaturalChannel;
+import zzy.zyproxy.netnat.util.NatSharaChannels;
 
 /**
  * @author zhouzhongyuan
  * @date 2016/12/3
  */
-public class AcceptUserInboundHandler extends NaturalInboundHandler {
-    private final static Logger LOGGER = LoggerFactory.getLogger(AcceptUserInboundHandler.class);
+public class AcceptUserHandler extends NaturalInboundHandler {
+    private final static Logger LOGGER = LoggerFactory.getLogger(AcceptUserHandler.class);
 
-    public AcceptUserInboundHandler(NaturalChannel naturalChannel, SharaChannels sharaChannels) {
-        super(naturalChannel, sharaChannels);
+    public AcceptUserHandler(NatNaturalChannel natNaturalChannel, NatSharaChannels natSharaChannels, int port) {
+        super(natNaturalChannel,natSharaChannels);
     }
 
     @Override

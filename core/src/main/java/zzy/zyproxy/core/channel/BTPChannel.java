@@ -13,10 +13,11 @@ import java.util.HashMap;
  */
 public abstract class BTPChannel extends ProxyChannel {
     private final static Logger LOGGER = LoggerFactory.getLogger(BTPChannel.class);
-    private HashMap<Integer, NaturalChannel> naturalChannelMap = new HashMap<Integer, NaturalChannel>();
+    private HashMap<String, NaturalChannel> naturalChannelMap
+        = new HashMap<String, NaturalChannel>();
 
-    protected ChannelFuture writeAndFlush(ProxyPacket msg) {
-        return channel().writeAndFlush(msg);
+    protected ChannelFuture writeMsgAndFlush(ProxyPacket msg) {
+        return super.writeAndFlush(msg);
     }
 
     public abstract ChannelFuture writeAuth(String authCode);
@@ -26,5 +27,15 @@ public abstract class BTPChannel extends ProxyChannel {
     public abstract ChannelFuture writeTransmit(String userCode, byte[] msgBody);
 
     public abstract ChannelFuture writeClose(String userCode);
+
+    public NaturalChannel getNaturalChannel(String userCode) {
+        return naturalChannelMap.get(userCode);
+    }
+
+    public NaturalChannel putNaturalChannel(String userCode, NaturalChannel naturalChannel) {
+        return naturalChannelMap.put(userCode, naturalChannel);
+    }
+    
+    
 
 }

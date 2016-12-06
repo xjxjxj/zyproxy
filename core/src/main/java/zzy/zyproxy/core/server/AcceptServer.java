@@ -27,7 +27,6 @@ public abstract class AcceptServer {
             .group(bossGroup, workerGroup)
             .channel(NioServerSocketChannel.class)
             .option(ChannelOption.TCP_NODELAY, true)
-            .option(ChannelOption.SO_REUSEADDR, true)
             .childHandler(childHandler());
 
 

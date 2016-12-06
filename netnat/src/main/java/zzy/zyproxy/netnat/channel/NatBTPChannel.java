@@ -18,14 +18,14 @@ public class NatBTPChannel extends BTPChannel {
         ProxyPacket proxyPacket = ProxyPacketFactory.newProxyPacket();
         ProxyPacket.Auth auth = proxyPacket.newAuth();
         auth.setAuthCode(authCode);
-        return writeAndFlush(proxyPacket);
+        return writeMsgAndFlush(proxyPacket);
     }
 
     public ChannelFuture writeConnected(String userCode) {
         ProxyPacket proxyPacket = ProxyPacketFactory.newProxyPacket();
         ProxyPacket.Connected connected = proxyPacket.newConnected();
         connected.setUserCode(userCode);
-        return writeAndFlush(proxyPacket);
+        return writeMsgAndFlush(proxyPacket);
     }
 
     public ChannelFuture writeTransmit(String userCode, byte[] msgBody) {
@@ -33,13 +33,13 @@ public class NatBTPChannel extends BTPChannel {
         ProxyPacket.Transmit transmit = proxyPacket.newTransmit();
         transmit.setUserCode(userCode);
         transmit.setBody(msgBody);
-        return writeAndFlush(proxyPacket);
+        return writeMsgAndFlush(proxyPacket);
     }
 
     public ChannelFuture writeClose(String userCode) {
         ProxyPacket proxyPacket = ProxyPacketFactory.newProxyPacket();
         ProxyPacket.Close close = proxyPacket.newClose();
         close.setUserCode(userCode);
-        return writeAndFlush(proxyPacket);
+        return writeMsgAndFlush(proxyPacket);
     }
 }

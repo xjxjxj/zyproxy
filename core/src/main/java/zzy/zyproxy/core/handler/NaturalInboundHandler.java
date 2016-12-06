@@ -21,24 +21,26 @@ public class NaturalInboundHandler extends ChannelInboundHandlerAdapter {
         this.sharaChannels = sharaChannels;
     }
 
-    private NaturalChannel flushNaturalChannel(Channel channel) {
-        naturalChannel.flushChannel(channel);
+    private NaturalChannel flushNaturalChannel(ChannelHandlerContext ctx) {
+        naturalChannel.flushChannelHandlerContext(ctx);
         return naturalChannel;
     }
 
-    @Override
-    public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
-        super.channelRegistered(ctx);
-    }
 
     @Override
-    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        super.channelInactive(ctx);
+    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        NaturalChannel naturalChannel = flushNaturalChannel(ctx);
+        naturalChannel.writeToBTPChannelConnected();
     }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         super.channelRead(ctx, msg);
+    }
+
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        super.channelInactive(ctx);
     }
 
     @Override
