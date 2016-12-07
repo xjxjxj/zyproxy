@@ -15,7 +15,11 @@ public class MsgPackEncoder extends MessageToByteEncoder<MsgpackPacket> {
 
     @Override
     protected void encode(ChannelHandlerContext ctx, MsgpackPacket msg, ByteBuf out) throws Exception {
-        byte[] write = MsgPackUtil.getMsgpacker().write(msg);
-        out.writeBytes(write);
+        try {
+            byte[] write = MsgPackUtil.getMsgpacker().write(msg);
+            out.writeBytes(write);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 }

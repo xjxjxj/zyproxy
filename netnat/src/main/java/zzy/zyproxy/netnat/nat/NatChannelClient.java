@@ -18,37 +18,39 @@ import java.net.InetSocketAddress;
 public class NatChannelClient extends ChannelClient {
     private final static Logger LOGGER = LoggerFactory.getLogger(NatChannelClient.class);
     private final InetSocketAddress acceptBTPAddr;
-    private final InetSocketAddress realAddr;
     private final String auth;
+    private final RealClientFactory realClientFactory;
 
     public NatChannelClient(InetSocketAddress acceptBTPAddr, InetSocketAddress realAddr, String auth) {
 
         this.acceptBTPAddr = acceptBTPAddr;
-        this.realAddr = realAddr;
         this.auth = auth;
+        this.realClientFactory = new RealClientFactory(realAddr);
     }
 
     protected ChannelInitializer<SocketChannel> handler() {
-        return new ChannelInitializer<SocketChannel>() {
-            @Override
-            protected void initChannel(SocketChannel ch) throws Exception {
-                ChannelPipeline pipeline = ch.pipeline();
-                MsgPackCodec.addCodec(pipeline);
-                pipeline.addLast(new NatBTPHandler(new NatBTPChannel(), auth));
-                System.out.println(ch);
-            }
-        };
+        return new Initializer();
     }
 
     public void start() {
         ChannelFuture channelFuture;
         try {
-            channelFuture = bootstrap(acceptBTPAddr);
+            channelFuture = bootstrap().connect(acceptBTPAddr).sync();
+            LOGGER.info("NatChannelClient@{},auth:{}",acceptBTPAddr,auth);
             channelFuture.channel().closeFuture().sync();
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
             shutdown();
+        }
+    }
+
+    class Initializer extends ChannelInitializer<SocketChannel> {
+        @Override
+        protected void initChannel(SocketChannel ch) throws Exception {
+            ChannelPipeline pipeline = ch.pipeline();
+            MsgPackCodec.addCodec(pipeline);
+            pipeline.addLast(new NatBTPHandler(new NatBTPChannel(), auth, realClientFactory));
         }
     }
 }

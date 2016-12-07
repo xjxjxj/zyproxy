@@ -19,12 +19,13 @@ public class NatSharaChannels implements SharaChannels {
         = new ConcurrentHashMap<Integer, BTPChannel>();
 
     public void addTcpBtpChannelMap(String authCode, BTPChannel btpChannel) {
+        LOGGER.debug("addTcpBtpChannelMap authCode:{}, btpChannel:{}", authCode, btpChannel);
         String[] split = authCode.split("-");
         String port = null;
         String auth;
         if (split.length == 2) {
-            port = split[2];
-            auth = split[1];
+            port = split[1];
+            auth = split[0];
         }
         if (port != null) {
             tcpBtpChannelMap.put(Integer.parseInt(port), btpChannel);

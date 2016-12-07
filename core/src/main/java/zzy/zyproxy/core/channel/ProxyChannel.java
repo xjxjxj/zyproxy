@@ -33,7 +33,33 @@ public class ProxyChannel {
         return ctx.writeAndFlush(msg);
     }
 
-    protected ChannelFuture flushAndClose() {
+    public ChannelFuture flushAndClose() {
         return writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
+    }
+
+    public void ctxRead() {
+        ctx.read();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ProxyChannel that = (ProxyChannel) o;
+
+        return ctx != null ? ctx.equals(that.ctx) : that.ctx == null;
+    }
+
+    @Override
+    public int hashCode() {
+        return ctx != null ? ctx.hashCode() : 0;
+    }
+
+    @Override
+    public String toString() {
+        return "ProxyChannel{" +
+            "ctx=" + ctx +
+            '}';
     }
 }

@@ -1,7 +1,6 @@
 package zzy.zyproxy.core.server;
 
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -19,7 +18,7 @@ public abstract class AcceptServer {
     private NioEventLoopGroup bossGroup;
     private NioEventLoopGroup workerGroup;
 
-    protected ChannelFuture bootstrap(InetSocketAddress bindAddr) throws InterruptedException {
+    protected ServerBootstrap bootstrap() throws InterruptedException {
         ServerBootstrap bootstrap = new ServerBootstrap();
         bossGroup = new NioEventLoopGroup();
         workerGroup = new NioEventLoopGroup();
@@ -29,8 +28,7 @@ public abstract class AcceptServer {
             .option(ChannelOption.TCP_NODELAY, true)
             .childHandler(childHandler());
 
-
-        return bootstrap.bind(bindAddr);
+        return bootstrap;
     }
 
     protected void shutdown() {
@@ -43,5 +41,6 @@ public abstract class AcceptServer {
     }
 
     protected abstract ChannelInitializer<SocketChannel> childHandler();
+
     public abstract void start();
 }

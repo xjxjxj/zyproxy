@@ -22,7 +22,7 @@ public class AcceptBTPServer extends AcceptServer {
     private final NatSharaChannels natSharaChannels;
     private InetSocketAddress bindAddr;
 
-    public AcceptBTPServer(InetSocketAddress bindAddr,NatSharaChannels natSharaChannels) {
+    public AcceptBTPServer(InetSocketAddress bindAddr, NatSharaChannels natSharaChannels) {
         this.bindAddr = bindAddr;
         if (bindAddr == null) {
             throw new RuntimeException("bindAddr不能为null");
@@ -36,7 +36,10 @@ public class AcceptBTPServer extends AcceptServer {
 
     public void start() {
         try {
-            ChannelFuture channelFuture = bootstrap(bindAddr);
+            ChannelFuture channelFuture = bootstrap()
+                .option(ChannelOption.AUTO_READ, true)
+                .bind(bindAddr);
+
             LOGGER.info("AcceptBTPServer bootstrap@port: {}", bindAddr.getPort());
             channelFuture.channel().closeFuture().sync();
         } catch (InterruptedException e) {

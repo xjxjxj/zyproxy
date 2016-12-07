@@ -25,9 +25,14 @@ public class AcceptBTPHandler extends BTPInboundHandler {
         return sharaChannels;
     }
 
+    protected void active(BTPChannel btpChannel) {
+        
+    }
+
     protected void channelReadAuth(BTPChannel btpChannel, ProxyPacket.Auth msg) {
         SharaChannels sharaChannels = sharaChannels();
         sharaChannels.addTcpBtpChannelMap(msg.getAuthCode(), btpChannel);
+        btpChannel.writeAuth(msg.getAuthCode());
     }
 
     protected void channelReadConnected(BTPChannel btpChannel, ProxyPacket.Connected msg) {
@@ -37,14 +42,14 @@ public class AcceptBTPHandler extends BTPInboundHandler {
 
     protected void channelReadTransmit(BTPChannel btpChannel, ProxyPacket.Transmit msg) {
         NaturalChannel naturalChannel =
-                btpChannel.getNaturalChannel(msg.getUserCode());
+            btpChannel.getNaturalChannel(msg.getUserCode());
         naturalChannel.flushBTPChannel(btpChannel);
         naturalChannel.writeMsgAndFlush(msg.getBody());
     }
 
     protected void channelReadClose(BTPChannel btpChannel, ProxyPacket.Close msg) {
         NaturalChannel naturalChannel =
-                btpChannel.getNaturalChannel(msg.getUserCode());
+            btpChannel.getNaturalChannel(msg.getUserCode());
         naturalChannel.flushBTPChannel(btpChannel);
         naturalChannel.closeChannel();
     }

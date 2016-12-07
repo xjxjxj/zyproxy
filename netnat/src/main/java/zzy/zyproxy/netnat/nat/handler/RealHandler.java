@@ -1,26 +1,22 @@
-package zzy.zyproxy.netnat.net.handler;
+package zzy.zyproxy.netnat.nat.handler;
 
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import zzy.zyproxy.core.channel.BTPChannel;
 import zzy.zyproxy.core.channel.NaturalChannel;
 import zzy.zyproxy.core.handler.NaturalInboundHandler;
-import zzy.zyproxy.netnat.channel.NatNaturalChannel;
-import zzy.zyproxy.netnat.util.NatSharaChannels;
 
 /**
  * @author zhouzhongyuan
- * @date 2016/12/3
+ * @date 2016/12/7
  */
-public class AcceptUserHandler extends NaturalInboundHandler {
-    private final static Logger LOGGER = LoggerFactory.getLogger(AcceptUserHandler.class);
+public class RealHandler extends NaturalInboundHandler {
+    private final static Logger LOGGER = LoggerFactory.getLogger(RealHandler.class);
 
-    public AcceptUserHandler(NaturalChannel naturalChannel) {
-        super(naturalChannel);
+    public RealHandler() {
+        super(null);
     }
-
 
     protected void active(final NaturalChannel naturalChannel) {
         naturalChannel.writeToBTPChannelConnected().addListener(new ChannelFutureListener() {

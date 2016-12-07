@@ -1,6 +1,7 @@
 package zzy.zyproxy.netnat.channel;
 
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelHandlerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import zzy.zyproxy.core.channel.BTPChannel;
@@ -12,6 +13,15 @@ import zzy.zyproxy.core.channel.NaturalChannel;
  */
 public class NatNaturalChannel extends NaturalChannel {
     private final static Logger LOGGER = LoggerFactory.getLogger(NatNaturalChannel.class);
+
+    public NatNaturalChannel(String userCode) {
+        super(userCode);
+    }
+
+    public NatNaturalChannel(ChannelHandlerContext ctx, String userCode) {
+        super(ctx, userCode);
+    }
+
 
     public ChannelFuture writeToBTPChannelConnected() {
         BTPChannel btpChannel = BTPChannel();

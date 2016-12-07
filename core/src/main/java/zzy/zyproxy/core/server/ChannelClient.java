@@ -18,17 +18,13 @@ public abstract class ChannelClient {
     private final static Logger LOGGER = LoggerFactory.getLogger(ChannelClient.class);
     EventLoopGroup group;
 
-    protected ChannelFuture bootstrap(InetSocketAddress connectAddr) throws InterruptedException {
-        group = new NioEventLoopGroup();
-        Bootstrap bootstrap = new Bootstrap().group(group)
+    protected Bootstrap bootstrap() throws InterruptedException {
+        return new Bootstrap().group(new NioEventLoopGroup())
             .channel(NioSocketChannel.class)
             .option(ChannelOption.TCP_NODELAY, true)
             .handler(handler());
-
-        return bootstrap.connect(connectAddr).sync();
     }
 
-    protected abstract ChannelInitializer<SocketChannel> handler();
 
     protected void shutdown() {
         if (group != null) {
@@ -37,4 +33,6 @@ public abstract class ChannelClient {
     }
 
     public abstract void start();
+
+    protected abstract ChannelInitializer<SocketChannel> handler();
 }

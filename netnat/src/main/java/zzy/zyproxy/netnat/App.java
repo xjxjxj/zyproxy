@@ -31,9 +31,9 @@ public class App {
 
         app.startAcetpBTPServer(proxyConfig, natSharaChannels);
 
-//        app.startAcetpServer(proxyConfig);
-//        Thread.sleep(2000);
-//        app.startClient(proxyConfig);
+        app.startAcetpServer(proxyConfig, natSharaChannels);
+        Thread.sleep(2000);
+        app.startClient(proxyConfig);
 
         synchronized (App.class) {
             try {
@@ -74,7 +74,7 @@ public class App {
 
     public void startClient(final ProxyConfig proxyConfig) {
         Map<InetSocketAddress, InetSocketAddress> acceptUserToRealAddrMap
-                = proxyConfig.getAcceptUserToRealAddrMap();
+            = proxyConfig.getAcceptUserToRealAddrMap();
         final String auth = proxyConfig.getAuth();
         for (final Map.Entry<InetSocketAddress, InetSocketAddress> entry : acceptUserToRealAddrMap.entrySet()) {
             final InetSocketAddress realAddr = entry.getValue();
@@ -82,9 +82,9 @@ public class App {
                 @Override
                 public void run() {
                     NatChannelClient natBTPClient = new NatChannelClient(
-                            proxyConfig.getAcceptBTPAddr(),
-                            realAddr,
-                            auth
+                        proxyConfig.getAcceptBTPAddr(),
+                        realAddr,
+                        auth
                     );
                     natBTPClient.start();
                 }

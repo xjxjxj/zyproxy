@@ -15,35 +15,28 @@ public abstract class NaturalChannel extends ProxyChannel {
     private final static Logger LOGGER = LoggerFactory.getLogger(NaturalChannel.class);
     private BTPChannel btpChannel;
     private Runnable realConnectedEvent;
-    private String userCode;
+    private final String userCode;
 
-    public NaturalChannel() {
-        this(null);
+    public NaturalChannel(String userCode) {
+        this(null, userCode);
     }
 
-    public NaturalChannel(ChannelHandlerContext ctx) {
+    public NaturalChannel(ChannelHandlerContext ctx, String userCode) {
         super(ctx);
-        if (ctx != null) {
-            flushUserCode(ctx.channel());
-        }
+        this.userCode = userCode;
     }
 
     public void flushBTPChannel(BTPChannel btpChannel) {
         this.btpChannel = btpChannel;
     }
 
-    public String userCode() {
-        return userCode;
-    }
-
-    private void flushUserCode(Channel channel) {
-        userCode = String.valueOf(channel.hashCode());
-    }
-
     @Override
     public void flushChannelHandlerContext(ChannelHandlerContext ctx) {
         super.flushChannelHandlerContext(ctx);
-        flushUserCode(ctx.channel());
+    }
+
+    public String userCode() {
+        return userCode;
     }
 
     public abstract ChannelFuture writeToBTPChannelConnected();
@@ -72,4 +65,5 @@ public abstract class NaturalChannel extends ProxyChannel {
             realConnectedEvent.run();
         }
     }
+
 }

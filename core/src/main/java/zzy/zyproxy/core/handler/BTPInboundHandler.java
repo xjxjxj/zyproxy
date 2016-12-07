@@ -26,27 +26,37 @@ public abstract class BTPInboundHandler extends SimpleChannelInboundHandler<Prox
         return btpChannel;
     }
 
-    
+    @Override
+    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        BTPChannel btpChannel = flushBTPChannel(ctx);
+        active(btpChannel);
+    }
+
+    protected abstract void active(BTPChannel btpChannel);
 
     protected void channelRead0(ChannelHandlerContext ctx, ProxyPacket msg) throws Exception {
         BTPChannel btpChannel = flushBTPChannel(ctx);
         if (msg.isAuth()) {
             ProxyPacket.Auth auth = msg.asAuth();
+            LOGGER.debug("ProxyPacket.Auth:{}", auth.getAuthCode());
             channelReadAuth(btpChannel, auth);
             return;
         }
         if (msg.isConnected()) {
             ProxyPacket.Connected connected = msg.asConnected();
+            LOGGER.debug("ProxyPacket.Connected:{}", connected.getUserCode());
             channelReadConnected(btpChannel, connected);
             return;
         }
         if (msg.isTransmit()) {
             ProxyPacket.Transmit transmit = msg.asTransmit();
+            LOGGER.debug("ProxyPacket.transmit:{}", transmit.getUserCode());
             channelReadTransmit(btpChannel, transmit);
             return;
         }
         if (msg.isClose()) {
             ProxyPacket.Close close = msg.asClose();
+            LOGGER.debug("ProxyPacket.close:{}", close.getUserCode());
             channelReadClose(btpChannel, close);
         }
     }

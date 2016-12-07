@@ -1,5 +1,6 @@
 package zzy.zyproxy.core.packet.msgpacket;
 
+import org.msgpack.annotation.Message;
 import zzy.zyproxy.core.codec.msgpack.MsgpackPacket;
 import zzy.zyproxy.core.packet.ProxyPacket;
 
@@ -7,6 +8,7 @@ import zzy.zyproxy.core.packet.ProxyPacket;
  * @author zhouzhongyuan
  * @date 2016/12/2
  */
+@Message
 public class MsgPacket implements ProxyPacket, MsgpackPacket {
     private int MSG_TYPE = 0x000a;
     /**
