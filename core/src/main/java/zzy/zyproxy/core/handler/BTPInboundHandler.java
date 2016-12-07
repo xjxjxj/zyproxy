@@ -32,34 +32,40 @@ public abstract class BTPInboundHandler extends SimpleChannelInboundHandler<Prox
         active(btpChannel);
     }
 
-    protected abstract void active(BTPChannel btpChannel);
 
     protected void channelRead0(ChannelHandlerContext ctx, ProxyPacket msg) throws Exception {
         BTPChannel btpChannel = flushBTPChannel(ctx);
         if (msg.isAuth()) {
             ProxyPacket.Auth auth = msg.asAuth();
-            LOGGER.debug("ProxyPacket.Auth:{}", auth.getAuthCode());
+            LOGGER.debug("{},ProxyPacket.Auth:{}", this.getClass().getSimpleName(), auth.getAuthCode());
             channelReadAuth(btpChannel, auth);
             return;
         }
         if (msg.isConnected()) {
             ProxyPacket.Connected connected = msg.asConnected();
-            LOGGER.debug("ProxyPacket.Connected:{}", connected.getUserCode());
+            LOGGER.debug("{},ProxyPacket.Connected:{}", this.getClass().getSimpleName(), connected.getUserCode());
             channelReadConnected(btpChannel, connected);
             return;
         }
         if (msg.isTransmit()) {
             ProxyPacket.Transmit transmit = msg.asTransmit();
-            LOGGER.debug("ProxyPacket.transmit:{}", transmit.getUserCode());
+            LOGGER.debug("{},ProxyPacket.transmit:{}", this.getClass().getSimpleName(), transmit.getUserCode());
             channelReadTransmit(btpChannel, transmit);
             return;
         }
         if (msg.isClose()) {
             ProxyPacket.Close close = msg.asClose();
-            LOGGER.debug("ProxyPacket.close:{}", close.getUserCode());
+            LOGGER.debug("{},ProxyPacket.close:{}", close.getUserCode());
             channelReadClose(btpChannel, close);
         }
     }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        LOGGER.warn("{}", this.getClass().getSimpleName(), cause);
+    }
+
+    protected abstract void active(BTPChannel btpChannel);
 
     protected abstract void channelReadAuth(BTPChannel btpChannel, ProxyPacket.Auth msg);
 

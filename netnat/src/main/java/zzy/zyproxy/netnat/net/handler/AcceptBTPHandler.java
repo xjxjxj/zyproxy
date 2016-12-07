@@ -26,7 +26,7 @@ public class AcceptBTPHandler extends BTPInboundHandler {
     }
 
     protected void active(BTPChannel btpChannel) {
-        
+
     }
 
     protected void channelReadAuth(BTPChannel btpChannel, ProxyPacket.Auth msg) {
@@ -42,14 +42,15 @@ public class AcceptBTPHandler extends BTPInboundHandler {
 
     protected void channelReadTransmit(BTPChannel btpChannel, ProxyPacket.Transmit msg) {
         NaturalChannel naturalChannel =
-            btpChannel.getNaturalChannel(msg.getUserCode());
+                btpChannel.getNaturalChannel(msg.getUserCode());
         naturalChannel.flushBTPChannel(btpChannel);
         naturalChannel.writeMsgAndFlush(msg.getBody());
+        LOGGER.debug("channelReadTransmit userCode: {}, naturalChannel: {}", msg.getUserCode(), naturalChannel);
     }
 
     protected void channelReadClose(BTPChannel btpChannel, ProxyPacket.Close msg) {
         NaturalChannel naturalChannel =
-            btpChannel.getNaturalChannel(msg.getUserCode());
+                btpChannel.getNaturalChannel(msg.getUserCode());
         naturalChannel.flushBTPChannel(btpChannel);
         naturalChannel.closeChannel();
     }

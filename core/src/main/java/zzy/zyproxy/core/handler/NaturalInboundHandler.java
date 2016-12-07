@@ -31,14 +31,8 @@ public abstract class NaturalInboundHandler extends ChannelInboundHandlerAdapter
     }
 
     @Override
-    public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
-        LOGGER.debug("channelRegistered:{}", ctx);
-        ctx.read();
-    }
-
-    @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        LOGGER.debug("channelActive:{}", ctx);
+        LOGGER.debug("{},channelActive:{}", this.getClass().getSimpleName(), ctx);
         NaturalChannel naturalChannel = flushNaturalChannel(ctx);
         active(naturalChannel);
     }
@@ -52,7 +46,7 @@ public abstract class NaturalInboundHandler extends ChannelInboundHandlerAdapter
         ByteBuf buf = (ByteBuf) msg;
         byte[] bytes = new byte[buf.readableBytes()];
         buf.readBytes(bytes);
-        LOGGER.debug("channelRead:{};msg:{}", ctx, bytes);
+        LOGGER.debug("{},channelRead:{}", this.getClass().getSimpleName(), ctx);
 
         read(naturalChannel, bytes);
     }
@@ -61,7 +55,7 @@ public abstract class NaturalInboundHandler extends ChannelInboundHandlerAdapter
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         NaturalChannel naturalChannel = flushNaturalChannel(ctx);
-        LOGGER.debug("channelInactive:{}", ctx);
+        LOGGER.debug("{},channelInactive:{}", this.getClass().getSimpleName(), ctx);
 
         inActive(naturalChannel);
     }
@@ -70,20 +64,20 @@ public abstract class NaturalInboundHandler extends ChannelInboundHandlerAdapter
     @Override
     public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
         NaturalChannel naturalChannel = flushNaturalChannel(ctx);
-        LOGGER.debug("channelWritabilityChanged:{}", ctx);
+        LOGGER.debug("{},channelWritabilityChanged:{}", this.getClass().getSimpleName(), ctx);
         writabilityChanged(naturalChannel);
     }
 
 
     @Override
     public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
-        LOGGER.debug("channelReadComplete:{}", ctx);
+        LOGGER.debug("{},channelReadComplete:{}", this.getClass().getSimpleName(), ctx);
         ctx.read();
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        LOGGER.warn("", cause);
+        LOGGER.warn("{}", this.getClass().getSimpleName(), cause);
     }
 
     protected abstract void active(NaturalChannel naturalChannel);

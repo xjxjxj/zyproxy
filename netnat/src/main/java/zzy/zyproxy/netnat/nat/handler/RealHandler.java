@@ -19,15 +19,17 @@ public class RealHandler extends NaturalInboundHandler {
     }
 
     protected void active(final NaturalChannel naturalChannel) {
-        naturalChannel.writeToBTPChannelConnected().addListener(new ChannelFutureListener() {
-            public void operationComplete(ChannelFuture future) throws Exception {
-                if (future.isSuccess()) {
-                    naturalChannel.ctxRead();
-                } else {
-                    naturalChannel.flushAndClose();
-                }
-            }
-        });
+        naturalChannel
+                .writeToBTPChannelConnected(null)
+                .addListener(new ChannelFutureListener() {
+                    public void operationComplete(ChannelFuture future) throws Exception {
+                        if (future.isSuccess()) {
+                            naturalChannel.ctxRead();
+                        } else {
+                            naturalChannel.flushAndClose();
+                        }
+                    }
+                });
     }
 
     protected void read(final NaturalChannel naturalChannel, byte[] msg) {

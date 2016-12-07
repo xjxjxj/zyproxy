@@ -4,6 +4,7 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,7 +15,7 @@ import org.slf4j.LoggerFactory;
 public abstract class NaturalChannel extends ProxyChannel {
     private final static Logger LOGGER = LoggerFactory.getLogger(NaturalChannel.class);
     private BTPChannel btpChannel;
-    private Runnable realConnectedEvent;
+    protected Runnable realConnectedEvent;
     private final String userCode;
 
     public NaturalChannel(String userCode) {
@@ -39,7 +40,7 @@ public abstract class NaturalChannel extends ProxyChannel {
         return userCode;
     }
 
-    public abstract ChannelFuture writeToBTPChannelConnected();
+    public abstract ChannelFuture writeToBTPChannelConnected(Runnable realConnectedEvent);
 
     public abstract ChannelFuture writeToBTPChannelTransmit(byte[] msgBody);
 
@@ -66,4 +67,12 @@ public abstract class NaturalChannel extends ProxyChannel {
         }
     }
 
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("btpChannel", btpChannel)
+                .append("realConnectedEvent", realConnectedEvent)
+                .append("userCode", userCode)
+                .toString();
+    }
 }

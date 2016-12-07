@@ -4,6 +4,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -13,20 +15,23 @@ import java.util.Map;
 public class ProxyConfig {
     private final static Logger LOGGER = LoggerFactory.getLogger(ProxyConfig.class);
 
-    private Map<InetSocketAddress, InetSocketAddress> acceptUserToRealAddrMap;
+    private List<Proxy> proxyList = new ArrayList<Proxy>();
     private InetSocketAddress acceptBTPAddr;
-    private String auth;
 
-    public Map<InetSocketAddress, InetSocketAddress> getAcceptUserToRealAddrMap() {
-        return acceptUserToRealAddrMap;
+    public List<Proxy> addProxy(InetSocketAddress acceptUserAddr, InetSocketAddress realAddr, String auth) {
+        Proxy proxy = new Proxy();
+        proxy.setAuth(auth);
+        proxy.setAcceptUserAddr(acceptUserAddr);
+        proxy.setRealAddr(realAddr);
+        proxyList.add(proxy);
+        return proxyList;
     }
 
-    public ProxyConfig setAcceptUserToRealAddrMap(Map<InetSocketAddress, InetSocketAddress> acceptUserToRealAddrMap) {
-        this.acceptUserToRealAddrMap = acceptUserToRealAddrMap;
-        return this;
+    public List<Proxy> proxyList() {
+        return proxyList;
     }
 
-    public InetSocketAddress getAcceptBTPAddr() {
+    public InetSocketAddress acceptBTPAddr() {
         return acceptBTPAddr;
     }
 
@@ -35,11 +40,33 @@ public class ProxyConfig {
         return this;
     }
 
-    public String getAuth() {
-        return auth;
-    }
+    public class Proxy {
+        private InetSocketAddress acceptUserAddr;
+        private InetSocketAddress realAddr;
+        private String auth;
 
-    public void setAuth(String auth) {
-        this.auth = auth;
+        public InetSocketAddress getAcceptUserAddr() {
+            return acceptUserAddr;
+        }
+
+        public void setAcceptUserAddr(InetSocketAddress acceptUserAddr) {
+            this.acceptUserAddr = acceptUserAddr;
+        }
+
+        public InetSocketAddress getRealAddr() {
+            return realAddr;
+        }
+
+        public void setRealAddr(InetSocketAddress realAddr) {
+            this.realAddr = realAddr;
+        }
+
+        public String getAuth() {
+            return auth;
+        }
+
+        public void setAuth(String auth) {
+            this.auth = auth;
+        }
     }
 }

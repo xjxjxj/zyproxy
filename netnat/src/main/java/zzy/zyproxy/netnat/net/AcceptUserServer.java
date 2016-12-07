@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @date 2016/12/3
  */
 public class AcceptUserServer extends AcceptServer {
-    private final static Logger LOGGER = LoggerFactory.getLogger(ProxyConfig.class);
+    private final static Logger LOGGER = LoggerFactory.getLogger(AcceptUserServer.class);
     private InetSocketAddress bindAddr;
     private final NatSharaChannels natSharaChannels;
     AtomicInteger userId = new AtomicInteger();
@@ -43,7 +43,7 @@ public class AcceptUserServer extends AcceptServer {
     public void start() {
         try {
             ChannelFuture channelFuture = bootstrap()
-                .option(ChannelOption.AUTO_READ, false)
+                .childOption(ChannelOption.AUTO_READ, false)
                 .bind(bindAddr);
             LOGGER.info("AcceptUserServer bootstrap@port: {}", bindAddr.getPort());
             channelFuture.channel().closeFuture().sync();
@@ -58,13 +58,14 @@ public class AcceptUserServer extends AcceptServer {
         @Override
         protected void initChannel(SocketChannel ch) throws Exception {
             ChannelPipeline pipeline = ch.pipeline();
-            MsgPackCodec.addCodec(pipeline);
+            
             BTPChannel tcpBtpChannel = natSharaChannels.getTcpBtpChannelMap(bindAddr.getPort());
             String userCode = String.valueOf(userId.getAndIncrement());
             NatNaturalChannel natNaturalChannel = new NatNaturalChannel(userCode);
             natNaturalChannel.flushBTPChannel(tcpBtpChannel);
             LOGGER.debug("initChannel,natNaturalChannel:{}", natNaturalChannel);
             tcpBtpChannel.putNaturalChannel(userCode, natNaturalChannel);
+            
             pipeline.addLast(new AcceptUserHandler(natNaturalChannel));
         }
     }

@@ -23,11 +23,12 @@ public class NatNaturalChannel extends NaturalChannel {
     }
 
 
-    public ChannelFuture writeToBTPChannelConnected() {
+    public ChannelFuture writeToBTPChannelConnected(Runnable realConnectedEvent) {
         BTPChannel btpChannel = BTPChannel();
         if (btpChannel == null) {
             return null;
         }
+        this.realConnectedEvent = realConnectedEvent;
         return btpChannel.writeConnected(userCode());
     }
 
@@ -46,4 +47,5 @@ public class NatNaturalChannel extends NaturalChannel {
         }
         return btpChannel.writeClose(userCode());
     }
+
 }

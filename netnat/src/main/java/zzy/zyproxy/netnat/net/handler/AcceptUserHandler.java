@@ -4,11 +4,8 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import zzy.zyproxy.core.channel.BTPChannel;
 import zzy.zyproxy.core.channel.NaturalChannel;
 import zzy.zyproxy.core.handler.NaturalInboundHandler;
-import zzy.zyproxy.netnat.channel.NatNaturalChannel;
-import zzy.zyproxy.netnat.util.NatSharaChannels;
 
 /**
  * @author zhouzhongyuan
@@ -23,15 +20,23 @@ public class AcceptUserHandler extends NaturalInboundHandler {
 
 
     protected void active(final NaturalChannel naturalChannel) {
-        naturalChannel.writeToBTPChannelConnected().addListener(new ChannelFutureListener() {
-            public void operationComplete(ChannelFuture future) throws Exception {
-                if (future.isSuccess()) {
-                    naturalChannel.ctxRead();
-                } else {
-                    naturalChannel.flushAndClose();
-                }
-            }
-        });
+        naturalChannel
+                .writeToBTPChannelConnected(new Runnable() {
+                    public void run() {
+                        try {
+                            naturalChannel.ctxRead();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                })
+                .addListener(new ChannelFutureListener() {
+                    public void operationComplete(ChannelFuture future) throws Exception {
+                        if (!future.isSuccess()) {
+                            naturalChannel.flushAndClose();
+                        }
+                    }
+                });
     }
 
     protected void read(final NaturalChannel naturalChannel, byte[] msg) {
