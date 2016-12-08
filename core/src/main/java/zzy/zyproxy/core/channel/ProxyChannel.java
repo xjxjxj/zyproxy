@@ -34,7 +34,8 @@ public class ProxyChannel {
     }
 
     public ChannelFuture flushAndClose() {
-        return writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
+        return writeAndFlush(Unpooled.EMPTY_BUFFER)
+            .addListener(ChannelFutureListener.CLOSE);
     }
 
     public void ctxRead() {

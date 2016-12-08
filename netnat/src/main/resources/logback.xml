@@ -31,7 +31,7 @@
     <logger name="io" level="INFO"/>
     <logger name="com" level="INFO"/>
 
-    <logger name="zzy" level="DEBUG"/>
+    <logger name="zzy" level="INFO"/>
 
     <root level="DEBUG">
         <appender-ref ref="CONSOLE"/>

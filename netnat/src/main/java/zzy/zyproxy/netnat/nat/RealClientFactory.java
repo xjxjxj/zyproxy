@@ -7,7 +7,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import zzy.zyproxy.netnat.channel.NatNaturalChannel;
+import zzy.zyproxy.netnat.nat.channel.NatBTPChannel;
 import zzy.zyproxy.netnat.nat.handler.RealHandler;
 
 import java.net.InetSocketAddress;
@@ -19,6 +19,7 @@ import java.net.InetSocketAddress;
 public class RealClientFactory {
     private final static Logger LOGGER = LoggerFactory.getLogger(RealClientFactory.class);
     private final InetSocketAddress realAddr;
+    private NatBTPChannel natBTPChannel;
 
     public RealClientFactory(InetSocketAddress realAddr) {
         this.realAddr = realAddr;
@@ -39,24 +40,20 @@ public class RealClientFactory {
         return bootstrap;
     }
 
-    public ChannelFuture createClient(final NatNaturalChannel natNaturalChannel) {
-        return bootstrap().connect(realAddr).addListener(new ChannelFutureListener() {
-            public void operationComplete(ChannelFuture future) throws Exception {
-                if (future.isSuccess()) {
-                    RealHandler realHandler = future.channel().pipeline().get(RealHandler.class);
-                    realHandler.setNaturalChannel(natNaturalChannel);
-                } else {
-                    future.addListener(CLOSE);
-                }
-            }
-        });
+    public ChannelFuture createClient() {
+        return bootstrap().connect(realAddr);
     }
+
+    public void setNatBTPChannel(NatBTPChannel natBTPChannel) {
+        this.natBTPChannel = natBTPChannel;
+    }
+
 
     class Initializer extends ChannelInitializer<SocketChannel> {
 
         protected void initChannel(SocketChannel ch) throws Exception {
             ChannelPipeline pipeline = ch.pipeline();
-            pipeline.addLast(new RealHandler());
+            pipeline.addLast(new RealHandler(natBTPChannel));
         }
     }
 }

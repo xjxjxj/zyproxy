@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import zzy.zyproxy.core.channel.BTPChannel;
 import zzy.zyproxy.core.util.SharaChannels;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -16,10 +17,10 @@ public class NatSharaChannels implements SharaChannels {
     private final static Logger LOGGER = LoggerFactory.getLogger(NatSharaChannels.class);
 
     private final Map<Integer, BTPChannel> tcpBtpChannelMap
-        = new ConcurrentHashMap<Integer, BTPChannel>();
+        = new HashMap<Integer, BTPChannel>();
 
-    public void addTcpBtpChannelMap(String authCode, BTPChannel btpChannel) {
-        LOGGER.debug("addTcpBtpChannelMap authCode:{}, btpChannel:{}", authCode, btpChannel);
+    public synchronized void putTcpBtpChannel(String authCode, BTPChannel btpChannel) {
+        LOGGER.debug("putTcpBtpChannel authCode:{}, btpChannel:{}", authCode, btpChannel);
         String[] split = authCode.split("-");
         String port = null;
         String auth;
@@ -32,7 +33,7 @@ public class NatSharaChannels implements SharaChannels {
         }
     }
 
-    public BTPChannel getTcpBtpChannelMap(Integer port) {
+    public BTPChannel getTcpBtpChannel(Integer port) {
         return tcpBtpChannelMap.get(port);
     }
 }

@@ -1,41 +1,29 @@
 package zzy.zyproxy.core.channel;
 
 import io.netty.channel.ChannelFuture;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.netty.channel.ChannelHandlerContext;
 import zzy.zyproxy.core.packet.ProxyPacket;
-
-import java.util.HashMap;
 
 /**
  * @author zhouzhongyuan
  * @date 2016/12/2
  */
-public abstract class BTPChannel extends ProxyChannel {
-    private final static Logger LOGGER = LoggerFactory.getLogger(BTPChannel.class);
-    private HashMap<String, NaturalChannel> naturalChannelMap
-        = new HashMap<String, NaturalChannel>();
+public interface BTPChannel {
+    ChannelFuture writeMsgAndFlush(ProxyPacket msg);
 
-    protected ChannelFuture writeMsgAndFlush(ProxyPacket msg) {
-        return super.writeAndFlush(msg);
-    }
+    ChannelFuture writeAuth(String authCode);
 
-    public abstract ChannelFuture writeAuth(String authCode);
+    ChannelFuture writeConnected(Integer userCode);
 
-    public abstract ChannelFuture writeConnected(String userCode);
+    ChannelFuture writeTransmit(Integer userCode, byte[] msgBody);
 
-    public abstract ChannelFuture writeTransmit(String userCode, byte[] msgBody);
+    ChannelFuture writeClose(Integer userCode);
 
-    public abstract ChannelFuture writeClose(String userCode);
+    NaturalChannel getNaturalChannel(Integer userCode);
 
-    public NaturalChannel getNaturalChannel(String userCode) {
-        return naturalChannelMap.get(userCode);
-    }
+    NaturalChannel putNaturalChannel(Integer userCode, NaturalChannel naturalChannel);
 
-    public NaturalChannel putNaturalChannel(String userCode, NaturalChannel naturalChannel) {
-        return naturalChannelMap.put(userCode, naturalChannel);
-    }
-    
-    
+    void flushChannelHandlerContext(ChannelHandlerContext ctx);
 
+    ChannelFuture flushAndClose();
 }

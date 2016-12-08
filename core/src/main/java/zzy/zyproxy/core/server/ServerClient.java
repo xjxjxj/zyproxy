@@ -14,25 +14,26 @@ import java.net.InetSocketAddress;
  * @author zhouzhongyuan
  * @date 2016/12/5
  */
-public abstract class ChannelClient {
-    private final static Logger LOGGER = LoggerFactory.getLogger(ChannelClient.class);
-    EventLoopGroup group;
+public class ServerClient {
+    private final EventLoopGroup group;
+    private final ChannelInitializer<SocketChannel> handler;
 
-    protected Bootstrap bootstrap() throws InterruptedException {
+    public ServerClient(EventLoopGroup group, ChannelInitializer<SocketChannel> handler) {
+        this.group = group;
+        this.handler = handler;
+    }
+
+    public Bootstrap bootstrap() throws InterruptedException {
         return new Bootstrap().group(new NioEventLoopGroup())
             .channel(NioSocketChannel.class)
             .option(ChannelOption.TCP_NODELAY, true)
-            .handler(handler());
+            .handler(handler);
     }
 
 
-    protected void shutdown() {
+    public void shutdown() {
         if (group != null) {
             group.shutdownGracefully();
         }
     }
-
-    public abstract void start();
-
-    protected abstract ChannelInitializer<SocketChannel> handler();
 }

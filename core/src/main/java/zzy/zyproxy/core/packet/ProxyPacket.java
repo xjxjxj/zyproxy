@@ -21,9 +21,9 @@ public interface ProxyPacket {
 
     //用户连接和连接真是服务器
     interface Connected {
-        String getUserCode();
+        Integer getUserCode();
 
-        void setUserCode(String userCode);
+        void setUserCode(Integer userCode);
     }
 
     boolean isConnected();
@@ -34,9 +34,9 @@ public interface ProxyPacket {
 
     //用户连接和连接发送信息
     interface Transmit {
-        String getUserCode();
+        Integer getUserCode();
 
-        void setUserCode(String userCode);
+        void setUserCode(Integer userCode);
 
         byte[] getBody();
 
@@ -51,9 +51,9 @@ public interface ProxyPacket {
 
     //用户关闭信息
     interface Close {
-        String getUserCode();
+        Integer getUserCode();
 
-        void setUserCode(String userCode);
+        void setUserCode(Integer userCode);
     }
 
     boolean isClose();

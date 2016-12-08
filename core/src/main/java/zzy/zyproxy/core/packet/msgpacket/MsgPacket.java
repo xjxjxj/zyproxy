@@ -19,7 +19,7 @@ public class MsgPacket implements ProxyPacket, MsgpackPacket {
     private final static int TRANSMIT = 0x003a;//用户连接和连接发送信息
     private final static int CLOSE = 0x004a;//用户连接和连接发送信息
     private String authCode;
-    private String userCode;
+    private Integer userCode;
     private byte[] msgBody;
 
     private class Action {
@@ -62,11 +62,11 @@ public class MsgPacket implements ProxyPacket, MsgpackPacket {
             super(msgType);
         }
 
-        public String getUserCode() {
+        public Integer getUserCode() {
             return userCode;
         }
 
-        public void setUserCode(String userCode) {
+        public void setUserCode(Integer userCode) {
             MsgPacket.this.userCode = userCode;
         }
     }
@@ -88,11 +88,11 @@ public class MsgPacket implements ProxyPacket, MsgpackPacket {
             super(msgType);
         }
 
-        public String getUserCode() {
+        public Integer getUserCode() {
             return MsgPacket.this.userCode;
         }
 
-        public void setUserCode(String userCode) {
+        public void setUserCode(Integer userCode) {
             MsgPacket.this.userCode = userCode;
         }
 
@@ -122,11 +122,11 @@ public class MsgPacket implements ProxyPacket, MsgpackPacket {
             super(msgType);
         }
 
-        public String getUserCode() {
+        public Integer getUserCode() {
             return MsgPacket.this.userCode;
         }
 
-        public void setUserCode(String userCode) {
+        public void setUserCode(Integer userCode) {
             MsgPacket.this.userCode = userCode;
         }
     }

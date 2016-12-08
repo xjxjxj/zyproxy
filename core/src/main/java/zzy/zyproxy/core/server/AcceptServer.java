@@ -13,25 +13,30 @@ import java.net.InetSocketAddress;
  * @author zhouzhongyuan
  * @date 2016/12/5
  */
-public abstract class AcceptServer {
+public class AcceptServer {
+    private final NioEventLoopGroup bossGroup;
+    private final NioEventLoopGroup workerGroup;
 
-    private NioEventLoopGroup bossGroup;
-    private NioEventLoopGroup workerGroup;
+    private final ChannelInitializer<SocketChannel> childHandler;
 
-    protected ServerBootstrap bootstrap() throws InterruptedException {
+    public AcceptServer(NioEventLoopGroup bossGroup, NioEventLoopGroup workerGroup, ChannelInitializer<SocketChannel> childHandler) {
+        this.bossGroup = bossGroup;
+        this.workerGroup = workerGroup;
+        this.childHandler = childHandler;
+    }
+
+    public ServerBootstrap bootstrap() throws InterruptedException {
         ServerBootstrap bootstrap = new ServerBootstrap();
-        bossGroup = new NioEventLoopGroup();
-        workerGroup = new NioEventLoopGroup();
         bootstrap
             .group(bossGroup, workerGroup)
             .channel(NioServerSocketChannel.class)
             .option(ChannelOption.TCP_NODELAY, true)
-            .childHandler(childHandler());
+            .childHandler(childHandler);
 
         return bootstrap;
     }
 
-    protected void shutdown() {
+    public void shutdown() {
         if (bossGroup != null) {
             bossGroup.shutdownGracefully();
         }
@@ -39,8 +44,4 @@ public abstract class AcceptServer {
             workerGroup.shutdownGracefully();
         }
     }
-
-    protected abstract ChannelInitializer<SocketChannel> childHandler();
-
-    public abstract void start();
 }

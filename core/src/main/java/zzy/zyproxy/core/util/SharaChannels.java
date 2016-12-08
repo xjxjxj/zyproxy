@@ -7,5 +7,7 @@ import zzy.zyproxy.core.channel.BTPChannel;
  * @date 2016/12/5
  */
 public interface SharaChannels {
-    void addTcpBtpChannelMap(String authCode, BTPChannel btpChannel);
+    void putTcpBtpChannel(String authCode, BTPChannel btpChannel);
+
+    BTPChannel getTcpBtpChannel(Integer port);
 }
