@@ -9,7 +9,6 @@ import zzy.zyproxy.core.packet.msgpacket.MsgPacket;
  */
 public abstract class ProxyPacketFactory {
     /**
-     * TODO config
      * @return 返回代理的信息
      */
     public static ProxyPacket newProxyPacket() {

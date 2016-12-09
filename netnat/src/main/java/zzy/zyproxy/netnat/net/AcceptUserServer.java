@@ -9,8 +9,10 @@ import io.netty.channel.socket.SocketChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import zzy.zyproxy.core.channel.BTPChannel;
+import zzy.zyproxy.core.channel.NaturalChannel;
 import zzy.zyproxy.core.server.AcceptServer;
 import zzy.zyproxy.netnat.channel.NetNatNaturalChannel;
+import zzy.zyproxy.netnat.net.channel.NetNaturalChannel;
 import zzy.zyproxy.netnat.net.handler.AcceptUserHandler;
 import zzy.zyproxy.netnat.util.NatSharaChannels;
 
@@ -28,11 +30,14 @@ public class AcceptUserServer {
     private final NatSharaChannels natSharaChannels;
 
     public AcceptUserServer(InetSocketAddress bindAddr, NatSharaChannels natSharaChannels) {
+        if (bindAddr == null) {
+            throw new NullPointerException("AcceptUserServer#bindAddr");
+        }
+        if (natSharaChannels == null) {
+            throw new NullPointerException("AcceptUserServer#natSharaChannels");
+        }
         this.bindAddr = bindAddr;
         this.natSharaChannels = natSharaChannels;
-        if (bindAddr == null) {
-            throw new RuntimeException("bindAddr不能为null");
-        }
         this.acceptServer = new AcceptServer(new NioEventLoopGroup(), new NioEventLoopGroup(), new Initializer());
     }
 
@@ -54,9 +59,8 @@ public class AcceptUserServer {
         @Override
         protected void initChannel(SocketChannel ch) throws Exception {
             ChannelPipeline pipeline = ch.pipeline();
-            BTPChannel tcpBtpChannel = natSharaChannels.getTcpBtpChannel(bindAddr.getPort());
-            
-            pipeline.addLast(new AcceptUserHandler(tcpBtpChannel));
+            NaturalChannel naturalChannel = new NetNaturalChannel(natSharaChannels, bindAddr);
+            pipeline.addLast(new AcceptUserHandler(naturalChannel));
         }
     }
 

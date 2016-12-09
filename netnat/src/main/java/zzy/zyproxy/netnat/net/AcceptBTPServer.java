@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import zzy.zyproxy.core.packet.msgpacket.MsgPackCodec;
 import zzy.zyproxy.core.server.AcceptServer;
 import zzy.zyproxy.netnat.channel.NetNatBTPChannel;
+import zzy.zyproxy.netnat.net.channel.NetBTPChannel;
 import zzy.zyproxy.netnat.net.handler.AcceptBTPHandler;
 import zzy.zyproxy.netnat.util.NatSharaChannels;
 import zzy.zyproxy.netnat.util.ProxyConfig;
@@ -25,10 +26,13 @@ public class AcceptBTPServer {
     private InetSocketAddress bindAddr;
 
     public AcceptBTPServer(InetSocketAddress bindAddr, NatSharaChannels natSharaChannels) {
-        this.bindAddr = bindAddr;
         if (bindAddr == null) {
-            throw new RuntimeException("bindAddr不能为null");
+            throw new NullPointerException("AcceptBTPServer#bindAddr");
         }
+        if (natSharaChannels == null) {
+            throw new NullPointerException("AcceptBTPServer#natSharaChannels");
+        }
+        this.bindAddr = bindAddr;
         this.natSharaChannels = natSharaChannels;
         this.acceptServer = new AcceptServer(new NioEventLoopGroup(), new NioEventLoopGroup(), new Initializer());
     }
@@ -53,8 +57,7 @@ public class AcceptBTPServer {
             ChannelPipeline pipeline = ch.pipeline();
             MsgPackCodec.addCodec(pipeline);
             pipeline.addLast(new AcceptBTPHandler(
-                new NetNatBTPChannel(),
-                natSharaChannels
+                new NetBTPChannel(natSharaChannels)
             ));
         }
     }

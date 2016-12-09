@@ -22,15 +22,13 @@ public class NatChannelClient {
     private final static Logger LOGGER = LoggerFactory.getLogger(NatChannelClient.class);
     private final InetSocketAddress acceptBTPAddr;
     private final String auth;
-    private final RealClientFactory realClientFactory;
-    private final NatBTPChannel natBTPChannel;
     private final ServerClient serverClient;
+    private final InetSocketAddress realAddr;
 
     public NatChannelClient(InetSocketAddress acceptBTPAddr, InetSocketAddress realAddr, String auth) {
         this.acceptBTPAddr = acceptBTPAddr;
         this.auth = auth;
-        this.realClientFactory = new RealClientFactory(realAddr);
-        this.natBTPChannel = new NatBTPChannel();
+        this.realAddr = realAddr;
         serverClient = new ServerClient(new NioEventLoopGroup(), new Initializer());
     }
 
@@ -52,7 +50,7 @@ public class NatChannelClient {
         protected void initChannel(SocketChannel ch) throws Exception {
             ChannelPipeline pipeline = ch.pipeline();
             MsgPackCodec.addCodec(pipeline);
-            pipeline.addLast(new NatBTPHandler(natBTPChannel, auth, realClientFactory));
+            pipeline.addLast(new NatBTPHandler(new NatBTPChannel(auth, realAddr)));
         }
     }
 }

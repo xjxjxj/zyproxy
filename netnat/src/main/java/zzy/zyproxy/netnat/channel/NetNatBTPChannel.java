@@ -7,23 +7,49 @@ import zzy.zyproxy.core.channel.BTPChannel;
 import zzy.zyproxy.core.channel.NaturalChannel;
 import zzy.zyproxy.core.channel.ProxyChannel;
 import zzy.zyproxy.core.packet.ProxyPacket;
+import zzy.zyproxy.core.util.TaskExecutor;
 import zzy.zyproxy.netnat.util.ProxyPacketFactory;
 
-import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author zhouzhongyuan
  * @date 2016/12/3
  */
-public class NetNatBTPChannel extends ProxyChannel implements BTPChannel {
+public abstract class NetNatBTPChannel extends ProxyChannel implements BTPChannel {
     private final static Logger LOGGER = LoggerFactory.getLogger(NetNatBTPChannel.class);
-
-    private final HashMap<Integer, NaturalChannel> naturalChannelHashMap
-        = new HashMap<Integer, NaturalChannel>();
 
     public ChannelFuture writeMsgAndFlush(ProxyPacket msg) {
         return super.writeAndFlush(msg);
     }
+
+    //-- naturalChannelHashMap
+    private volatile Map<Integer, NaturalChannel> naturalChannelHashMap
+        = new ConcurrentHashMap<Integer, NaturalChannel>();
+
+    public NaturalChannel getNaturalChannel(Integer userCode) {
+        return naturalChannelHashMap.get(userCode);
+    }
+
+    public NaturalChannel putNaturalChannel(Integer userCode, NaturalChannel naturalChannel) {
+        return naturalChannelHashMap.put(userCode, naturalChannel);
+    }
+
+    public void removeNaturalChannel(Integer userCode) {
+        NaturalChannel naturalChannel = naturalChannelHashMap.remove(userCode);
+        if (naturalChannel != null) {
+            naturalChannel.flushAndClose();
+        }
+    }
+
+    //--TaskExecutor
+    private final TaskExecutor taskExecutor = TaskExecutor.createExecuter();
+
+    protected void executeTask(final Runnable runnable) {
+        taskExecutor.executeTask(runnable);
+    }
+
 
     public ChannelFuture writeAuth(String authCode) {
         ProxyPacket proxyPacket = ProxyPacketFactory.newProxyPacket();
@@ -32,6 +58,7 @@ public class NetNatBTPChannel extends ProxyChannel implements BTPChannel {
         return writeMsgAndFlush(proxyPacket);
     }
 
+    //--use from real channel
     public ChannelFuture writeConnected(Integer userCode) {
         ProxyPacket proxyPacket = ProxyPacketFactory.newProxyPacket();
         ProxyPacket.Connected connected = proxyPacket.newConnected();
@@ -54,12 +81,33 @@ public class NetNatBTPChannel extends ProxyChannel implements BTPChannel {
         return writeMsgAndFlush(proxyPacket);
     }
 
-    public NaturalChannel getNaturalChannel(Integer userCode) {
-        return naturalChannelHashMap.get(userCode);
+    //--do for real channel
+
+    public abstract void channelActive();
+
+    public abstract void channelReadAuth(final ProxyPacket.Auth auth);
+
+    public abstract void channelReadConnected(final ProxyPacket.Connected msg);
+
+    protected abstract Logger getLogger();
+
+    public void channelReadTransmit(final ProxyPacket.Transmit msg) {
+        executeTask(new Runnable() {
+            public void run() {
+                NaturalChannel naturalChannel = getNaturalChannel(msg.getUserCode());
+                if (naturalChannel == null) {
+                    getLogger().error("naturalChannel == null");
+                }
+                naturalChannel.writeMsgAndFlush(msg.getBody());
+            }
+        });
     }
 
-    public NaturalChannel putNaturalChannel(Integer userCode, NaturalChannel naturalChannel) {
-        return naturalChannelHashMap.put(userCode, naturalChannel);
+    public void channelReadClose(final ProxyPacket.Close msg) {
+        executeTask(new Runnable() {
+            public void run() {
+                removeNaturalChannel(msg.getUserCode());
+            }
+        });
     }
-
 }

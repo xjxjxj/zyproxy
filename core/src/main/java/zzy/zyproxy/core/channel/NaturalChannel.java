@@ -8,26 +8,28 @@ import io.netty.channel.ChannelHandlerContext;
  * @date 2016/12/4
  */
 public interface NaturalChannel {
-    
+
     Integer userCode();
 
-    ChannelFuture writeToBTPChannelConnected();
-
-    ChannelFuture writeToBTPChannelTransmit(byte[] msgBody);
-
-    ChannelFuture writeToBTPChannelClose();
-
-    BTPChannel BTPChannel();
+    BTPChannel btpChannel();
 
     void ctxRead();
 
     void regConnectedEvent(Runnable connectedEvent);
 
-    ChannelFuture flushAndClose();
+    void triggerConnectedEvent();
 
-    void realConnected();
+    ChannelFuture flushAndClose();
 
     ChannelFuture writeMsgAndFlush(byte[] body);
 
     void flushChannelHandlerContext(ChannelHandlerContext ctx);
+
+    void channelActive();
+
+    void channelRead(byte[] bytes);
+
+    void channelInactive();
+
+    void channelWritabilityChanged();
 }

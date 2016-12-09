@@ -2,85 +2,136 @@ package zzy.zyproxy.netnat.channel;
 
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelFutureListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import zzy.zyproxy.core.channel.BTPChannel;
 import zzy.zyproxy.core.channel.NaturalChannel;
 import zzy.zyproxy.core.channel.ProxyChannel;
-
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import zzy.zyproxy.core.util.TaskExecutor;
+import zzy.zyproxy.netnat.nat.channel.NatBTPChannel;
 
 /**
  * @author zhouzhongyuan
  * @date 2016/12/5
  */
-public class NetNatNaturalChannel extends ProxyChannel implements NaturalChannel {
+public abstract class NetNatNaturalChannel extends ProxyChannel implements NaturalChannel {
     private final static Logger LOGGER = LoggerFactory.getLogger(NetNatNaturalChannel.class);
 
-    private final Integer userCode;
-    private final BTPChannel btpChannel;
-    private volatile Runnable connectedEvent;
-    ExecutorService cachedThreadPool = Executors.newCachedThreadPool();
-
-
-    public NetNatNaturalChannel(Integer userCode, BTPChannel btpChannel) {
-        this(null, userCode, btpChannel);
-    }
-
-    public NetNatNaturalChannel(ChannelHandlerContext ctx, Integer userCode, BTPChannel btpChannel) {
-        super(ctx);
-        if (userCode == null || btpChannel == null) {
-            throw new RuntimeException("Integer userCode, BTPChannel btpChannel 不能为NULL");
-        }
-        this.userCode = userCode;
-        this.btpChannel = btpChannel;
-    }
-
-    public Integer userCode() {
-        return userCode;
-    }
-
-    public BTPChannel BTPChannel() {
-        return btpChannel;
-    }
-
-    public void regConnectedEvent(Runnable connectedEvent) {
-        this.connectedEvent = connectedEvent;
-    }
-
-    public void realConnected() {
-        if (connectedEvent != null) {
-            cachedThreadPool.execute(connectedEvent);
-        }
+    public NetNatNaturalChannel() {
+        super();
     }
 
     public ChannelFuture writeMsgAndFlush(byte[] body) {
         return super.writeAndFlush(Unpooled.wrappedBuffer(body));
     }
 
-    public ChannelFuture writeToBTPChannelConnected() {
-        BTPChannel btpChannel = BTPChannel();
-        if (btpChannel == null) {
-            return null;
+    //--
+    private Integer userCode = null;
+    private final Object userCodeNullLocker = new Object();
+
+    public Integer userCode() {
+        if (userCode == null) {
+            synchronized (userCodeNullLocker) {
+                try {
+                    userCodeNullLocker.wait(10 * 1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
         }
-        return btpChannel.writeConnected(userCode());
+        return userCode;
     }
 
-    public ChannelFuture writeToBTPChannelTransmit(byte[] msgBody) {
-        BTPChannel btpChannel = BTPChannel();
-        if (btpChannel == null) {
-            return null;
+    protected void setUserCode(Integer userCode) {
+        synchronized (userCodeNullLocker) {
+            this.userCode = userCode;
+            userCodeNullLocker.notifyAll();
         }
-        return btpChannel.writeTransmit(userCode(), msgBody);
     }
 
-    public ChannelFuture writeToBTPChannelClose() {
-        BTPChannel btpChannel = BTPChannel();
-        if (btpChannel == null) {
-            return null;
+    //---
+    private final TaskExecutor taskExecutor = TaskExecutor.createExecuter();
+
+    protected void executeTask(final Runnable runnable) {
+        taskExecutor.executeTask(runnable);
+    }
+
+    //--
+    private volatile Runnable connectedEvent;
+
+    public void regConnectedEvent(final Runnable connectedEvent) {
+        this.connectedEvent = new Runnable() {
+            public void run() {
+                connectedEvent.run();
+                NetNatNaturalChannel.this.connectedEvent = null;
+            }
+        };
+    }
+
+    public void triggerConnectedEvent() {
+        if (connectedEvent != null) {
+            executeTask(connectedEvent);
         }
-        return btpChannel.writeClose(userCode());
+    }
+
+    //==
+    private BTPChannel btpChannel = null;
+    private final Object btpChannelNullLocker = new Object();
+
+    public BTPChannel btpChannel() {
+        if (btpChannel == null) {
+            synchronized (btpChannelNullLocker) {
+                try {
+                    btpChannelNullLocker.wait(10 * 1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return btpChannel;
+    }
+
+    protected void setBTPChannel(BTPChannel btpChannel) {
+        synchronized (btpChannelNullLocker) {
+            this.btpChannel = btpChannel;
+            btpChannelNullLocker.notifyAll();
+        }
+    }
+
+    public abstract void channelActive();
+
+    public void channelRead(final byte[] bytes) {
+        executeTask(new Runnable() {
+            public void run() {
+                btpChannel()
+                    .writeTransmit(userCode(), bytes)
+                    .addListener(new ChannelFutureListener() {
+                        public void operationComplete(ChannelFuture future) throws Exception {
+                            if (future.isSuccess()) {
+                                ctxRead();
+                            }
+                        }
+                    });
+            }
+        });
+    }
+
+    public void channelInactive() {
+        executeTask(new Runnable() {
+            public void run() {
+                btpChannel()
+                    .writeClose(userCode())
+                    .addListener(new ChannelFutureListener() {
+                        public void operationComplete(ChannelFuture future) throws Exception {
+                            btpChannel().removeNaturalChannel(userCode());
+                        }
+                    });
+            }
+        });
+    }
+
+    public void channelWritabilityChanged() {
+        //TODO channelWritabilityChanged
     }
 }

@@ -10,10 +10,17 @@ import io.netty.channel.ChannelHandlerContext;
  * @date 2016/12/6
  */
 public abstract class ChannelUtil {
-    public static void flushAndClose(Channel channel){
+    public static void flushAndClose(Channel channel) {
+        if (channel == null) {
+            return;
+        }
         channel.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
-    } 
-    public static void flushAndClose(ChannelHandlerContext channel){
+    }
+
+    public static void flushAndClose(ChannelHandlerContext channel) {
+        if (channel == null) {
+            return;
+        }
         channel.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
     }
 }

@@ -8,6 +8,7 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import zzy.zyproxy.netnat.nat.channel.NatBTPChannel;
+import zzy.zyproxy.netnat.nat.channel.NatNaturalChannel;
 import zzy.zyproxy.netnat.nat.handler.RealHandler;
 
 import java.net.InetSocketAddress;
@@ -19,9 +20,13 @@ import java.net.InetSocketAddress;
 public class RealClientFactory {
     private final static Logger LOGGER = LoggerFactory.getLogger(RealClientFactory.class);
     private final InetSocketAddress realAddr;
-    private NatBTPChannel natBTPChannel;
+    private final NatBTPChannel natBTPChannel;
 
-    public RealClientFactory(InetSocketAddress realAddr) {
+    public RealClientFactory(NatBTPChannel natBTPChannel, InetSocketAddress realAddr) {
+        if (natBTPChannel == null) {
+            throw new NullPointerException("RealClientFactory#NatBTPChannel");
+        }
+        this.natBTPChannel = natBTPChannel;
         this.realAddr = realAddr;
     }
 
@@ -40,20 +45,22 @@ public class RealClientFactory {
         return bootstrap;
     }
 
+    public ChannelFuture createClient(InetSocketAddress address) {
+        return bootstrap().connect(address);
+    }
+
     public ChannelFuture createClient() {
-        return bootstrap().connect(realAddr);
+        if (realAddr == null) {
+            throw new NullPointerException("RealClientFactory#createClient#realAddr");
+        }
+        return createClient(realAddr);
     }
-
-    public void setNatBTPChannel(NatBTPChannel natBTPChannel) {
-        this.natBTPChannel = natBTPChannel;
-    }
-
 
     class Initializer extends ChannelInitializer<SocketChannel> {
 
         protected void initChannel(SocketChannel ch) throws Exception {
             ChannelPipeline pipeline = ch.pipeline();
-            pipeline.addLast(new RealHandler(natBTPChannel));
+            pipeline.addLast(new RealHandler(new NatNaturalChannel(natBTPChannel)));
         }
     }
 }

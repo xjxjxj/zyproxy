@@ -18,7 +18,7 @@ public class App {
     static {
         proxyConfig.setAcceptBTPAddr(new InetSocketAddress("127.0.0.1", 8858));
         proxyConfig.addProxy(new InetSocketAddress("127.0.0.1", 3307), new InetSocketAddress("127.0.0.1", 3306), "nihao-3307");
-        proxyConfig.addProxy(new InetSocketAddress("127.0.0.1", 8081), new InetSocketAddress("127.0.0.1", 80), "nihao-8081");
+        proxyConfig.addProxy(new InetSocketAddress("127.0.0.1", 8081), new InetSocketAddress("127.0.0.1", 8888), "nihao-8081");
     }
 
     public static void main(String[] args) throws InterruptedException {
