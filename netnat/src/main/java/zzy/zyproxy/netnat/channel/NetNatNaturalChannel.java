@@ -9,7 +9,6 @@ import zzy.zyproxy.core.channel.BTPChannel;
 import zzy.zyproxy.core.channel.NaturalChannel;
 import zzy.zyproxy.core.channel.ProxyChannel;
 import zzy.zyproxy.core.util.TaskExecutor;
-import zzy.zyproxy.netnat.nat.channel.NatBTPChannel;
 
 /**
  * @author zhouzhongyuan
@@ -17,6 +16,8 @@ import zzy.zyproxy.netnat.nat.channel.NatBTPChannel;
  */
 public abstract class NetNatNaturalChannel extends ProxyChannel implements NaturalChannel {
     private final static Logger LOGGER = LoggerFactory.getLogger(NetNatNaturalChannel.class);
+
+    public enum Status {}
 
     public NetNatNaturalChannel() {
         super();
@@ -27,98 +28,35 @@ public abstract class NetNatNaturalChannel extends ProxyChannel implements Natur
     }
 
     //--
-    private Integer userCode = null;
-    private final Object userCodeNullLocker = new Object();
-
-    public Integer userCode() {
-        if (userCode == null) {
-            synchronized (userCodeNullLocker) {
-                try {
-                    userCodeNullLocker.wait(10 * 1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        return userCode;
-    }
-
-    protected void setUserCode(Integer userCode) {
-        synchronized (userCodeNullLocker) {
-            this.userCode = userCode;
-            userCodeNullLocker.notifyAll();
-        }
-    }
+    public abstract Integer userCode();
 
     //---
-    private final TaskExecutor taskExecutor = TaskExecutor.createExecuter();
+    private final TaskExecutor taskQueue = TaskExecutor.createQueueExecuter();
 
-    protected void executeTask(final Runnable runnable) {
-        taskExecutor.executeTask(runnable);
-    }
-
-    //--
-    private volatile Runnable connectedEvent;
-
-    public void regConnectedEvent(final Runnable connectedEvent) {
-        this.connectedEvent = new Runnable() {
-            public void run() {
-                connectedEvent.run();
-                NetNatNaturalChannel.this.connectedEvent = null;
-            }
-        };
-    }
-
-    public void triggerConnectedEvent() {
-        if (connectedEvent != null) {
-            executeTask(connectedEvent);
-        }
+    public void submitTask(final Runnable runnable) {
+        taskQueue.submitTask(runnable);
     }
 
     //==
-    private BTPChannel btpChannel = null;
-    private final Object btpChannelNullLocker = new Object();
 
-    public BTPChannel btpChannel() {
-        if (btpChannel == null) {
-            synchronized (btpChannelNullLocker) {
-                try {
-                    btpChannelNullLocker.wait(10 * 1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        return btpChannel;
-    }
+    public abstract BTPChannel btpChannel();
 
-    protected void setBTPChannel(BTPChannel btpChannel) {
-        synchronized (btpChannelNullLocker) {
-            this.btpChannel = btpChannel;
-            btpChannelNullLocker.notifyAll();
-        }
-    }
 
     public abstract void channelActive();
 
     public void channelRead(final byte[] bytes) {
-        executeTask(new Runnable() {
+        submitTask(new Runnable() {
             public void run() {
+                LOGGER.debug("运行【2】channelRead and writeTransmit【开始】");
                 btpChannel()
-                    .writeTransmit(userCode(), bytes)
-                    .addListener(new ChannelFutureListener() {
-                        public void operationComplete(ChannelFuture future) throws Exception {
-                            if (future.isSuccess()) {
-                                ctxRead();
-                            }
-                        }
-                    });
+                    .writeTransmit(userCode(), bytes);
+                LOGGER.debug("运行【2】channelRead and writeTransmit【结束】");
             }
         });
     }
 
     public void channelInactive() {
-        executeTask(new Runnable() {
+        submitTask(new Runnable() {
             public void run() {
                 btpChannel()
                     .writeClose(userCode())

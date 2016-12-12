@@ -47,7 +47,6 @@ public class NatBTPHandler extends SimpleChannelInboundHandler<ProxyPacket> {
         }
         if (msg.isConnected()) {
             ProxyPacket.Connected connected = msg.asConnected();
-            LOGGER.debug("ProxyPacket.Connected:{}", connected.getUserCode());
             btpChannel.channelReadConnected(connected);
             return;
         }

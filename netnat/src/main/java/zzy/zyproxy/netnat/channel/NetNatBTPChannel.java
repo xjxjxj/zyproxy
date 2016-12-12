@@ -20,6 +20,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public abstract class NetNatBTPChannel extends ProxyChannel implements BTPChannel {
     private final static Logger LOGGER = LoggerFactory.getLogger(NetNatBTPChannel.class);
 
+    protected abstract Logger subLogger();
+
     public ChannelFuture writeMsgAndFlush(ProxyPacket msg) {
         return super.writeAndFlush(msg);
     }
@@ -38,19 +40,19 @@ public abstract class NetNatBTPChannel extends ProxyChannel implements BTPChanne
 
     public void removeNaturalChannel(Integer userCode) {
         NaturalChannel naturalChannel = naturalChannelHashMap.remove(userCode);
-        if (naturalChannel != null) {
+        if (naturalChannel != null && naturalChannel.ctxchannelIsActive()) {
             naturalChannel.flushAndClose();
         }
     }
 
     //--TaskExecutor
-    private final TaskExecutor taskExecutor = TaskExecutor.createExecuter();
+    private final TaskExecutor taskExecutor = TaskExecutor.createNonQueueExecuter();
 
-    protected void executeTask(final Runnable runnable) {
-        taskExecutor.executeTask(runnable);
+    public void submitTask(final Runnable runnable) {
+        taskExecutor.submitTask(runnable);
     }
 
-
+    //==
     public ChannelFuture writeAuth(String authCode) {
         ProxyPacket proxyPacket = ProxyPacketFactory.newProxyPacket();
         ProxyPacket.Auth auth = proxyPacket.newAuth();
@@ -81,22 +83,28 @@ public abstract class NetNatBTPChannel extends ProxyChannel implements BTPChanne
         return writeMsgAndFlush(proxyPacket);
     }
 
-    //--do for real channel
+    //--do for natural channel
+    public void channelReadAuth(final ProxyPacket.Auth msg) {
+        submitTask(channelReadAuthRunnable(msg));
+    }
 
-    public abstract void channelActive();
+    public abstract Runnable channelReadAuthRunnable(final ProxyPacket.Auth msg);
 
-    public abstract void channelReadAuth(final ProxyPacket.Auth auth);
 
-    public abstract void channelReadConnected(final ProxyPacket.Connected msg);
+    public void channelReadConnected(final ProxyPacket.Connected msg) {
+        submitTask(channelReadConnectedRunnable(msg));
+    }
 
-    protected abstract Logger getLogger();
+    public abstract Runnable channelReadConnectedRunnable(final ProxyPacket.Connected msg);
+
 
     public void channelReadTransmit(final ProxyPacket.Transmit msg) {
-        executeTask(new Runnable() {
+        submitTask(new Runnable() {
             public void run() {
                 NaturalChannel naturalChannel = getNaturalChannel(msg.getUserCode());
                 if (naturalChannel == null) {
-                    getLogger().error("naturalChannel == null");
+                    subLogger().error("naturalChannel == null");
+                    return;
                 }
                 naturalChannel.writeMsgAndFlush(msg.getBody());
             }
@@ -104,10 +112,16 @@ public abstract class NetNatBTPChannel extends ProxyChannel implements BTPChanne
     }
 
     public void channelReadClose(final ProxyPacket.Close msg) {
-        executeTask(new Runnable() {
+        submitTask(new Runnable() {
             public void run() {
                 removeNaturalChannel(msg.getUserCode());
             }
         });
     }
+
+    public void channelActive() {
+        submitTask(channelActiveRunnable());
+    }
+
+    protected abstract Runnable channelActiveRunnable();
 }

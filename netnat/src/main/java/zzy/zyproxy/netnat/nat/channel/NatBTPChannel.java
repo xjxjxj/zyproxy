@@ -16,7 +16,7 @@ import java.util.Queue;
  */
 public class NatBTPChannel extends NetNatBTPChannel {
     private final static Logger LOGGER = LoggerFactory.getLogger(NatBTPChannel.class);
-    private final Queue<ProxyPacket.Connected> usersQueue = new LinkedList<ProxyPacket.Connected>();
+    private final Queue<NatNaturalChannel> usersQueue = new LinkedList<NatNaturalChannel>();
     private final String auth;
     private final RealClientFactory realClientFactory;
 
@@ -31,32 +31,44 @@ public class NatBTPChannel extends NetNatBTPChannel {
         this.auth = auth;
         this.realClientFactory = new RealClientFactory(this, realAddr);
     }
-    
 
-    public synchronized ProxyPacket.Connected pollUser() {
+
+    public synchronized NatNaturalChannel pollNatNaturalChannel() {
         return usersQueue.poll();
     }
 
-    public void channelActive() {
-        writeAuth(auth);
-    }
-
-    public void channelReadAuth(ProxyPacket.Auth auth) {
-        if (!this.auth.equals(auth.getAuthCode())) {
-            flushAndClose();
-        }
-    }
-
-    public void channelReadConnected(final ProxyPacket.Connected msg) {
-        executeTask(new Runnable() {
+    protected Runnable channelActiveRunnable() {
+        return new Runnable() {
             public void run() {
-                usersQueue.add(msg);
+                writeAuth(auth);
+            }
+        };
+    }
+
+    public Runnable channelReadAuthRunnable(final ProxyPacket.Auth msg) {
+        return new Runnable() {
+            public void run() {
+                if (!auth.equals(msg.getAuthCode())) {
+                    flushAndClose();
+                }
+            }
+        };
+    }
+
+
+    public Runnable channelReadConnectedRunnable(final ProxyPacket.Connected msg) {
+        return new Runnable() {
+            public void run() {
+                Integer userCode = msg.getUserCode();
+                NatNaturalChannel natNaturalChannel = new NatNaturalChannel(NatBTPChannel.this, userCode);
+                putNaturalChannel(userCode, natNaturalChannel);
+                usersQueue.add(natNaturalChannel);
                 realClientFactory.createClient();
             }
-        });
+        };
     }
 
-    protected Logger getLogger() {
+    protected Logger subLogger() {
         return LOGGER;
     }
 }

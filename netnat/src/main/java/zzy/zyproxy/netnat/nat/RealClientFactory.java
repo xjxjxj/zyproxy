@@ -39,28 +39,28 @@ public class RealClientFactory {
                 = new Bootstrap().group(group)
                 .channel(NioSocketChannel.class)
                 .option(ChannelOption.TCP_NODELAY, true)
-                .option(ChannelOption.AUTO_READ, false)
+                .option(ChannelOption.AUTO_READ, true)
                 .handler(new Initializer());
         }
         return bootstrap;
     }
 
-    public ChannelFuture createClient(InetSocketAddress address) {
-        return bootstrap().connect(address);
-    }
 
     public ChannelFuture createClient() {
         if (realAddr == null) {
             throw new NullPointerException("RealClientFactory#createClient#realAddr");
         }
-        return createClient(realAddr);
+        return bootstrap().connect(realAddr);
     }
 
     class Initializer extends ChannelInitializer<SocketChannel> {
 
         protected void initChannel(SocketChannel ch) throws Exception {
             ChannelPipeline pipeline = ch.pipeline();
-            pipeline.addLast(new RealHandler(new NatNaturalChannel(natBTPChannel)));
+            //--
+            NatNaturalChannel natNaturalChannel = natBTPChannel.pollNatNaturalChannel();
+            //--
+            pipeline.addLast(new RealHandler(natNaturalChannel));
         }
     }
 }

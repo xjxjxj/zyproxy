@@ -56,9 +56,10 @@ public class AcceptBTPServer {
         protected void initChannel(SocketChannel ch) throws Exception {
             ChannelPipeline pipeline = ch.pipeline();
             MsgPackCodec.addCodec(pipeline);
-            pipeline.addLast(new AcceptBTPHandler(
-                new NetBTPChannel(natSharaChannels)
-            ));
+            //--
+            NetBTPChannel netBTPChannel = new NetBTPChannel(natSharaChannels);
+            //--
+            pipeline.addLast(new AcceptBTPHandler(netBTPChannel));
         }
     }
 

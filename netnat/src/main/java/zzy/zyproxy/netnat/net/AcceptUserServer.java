@@ -43,8 +43,9 @@ public class AcceptUserServer {
 
     public void start() {
         try {
-            ChannelFuture channelFuture = acceptServer.bootstrap()
-                .childOption(ChannelOption.AUTO_READ, false)
+            ChannelFuture channelFuture
+                = acceptServer.bootstrap()
+                .childOption(ChannelOption.AUTO_READ, true)
                 .bind(bindAddr);
             LOGGER.info("AcceptUserServer bootstrap@port: {}", bindAddr.getPort());
             channelFuture.channel().closeFuture().sync();
@@ -59,7 +60,9 @@ public class AcceptUserServer {
         @Override
         protected void initChannel(SocketChannel ch) throws Exception {
             ChannelPipeline pipeline = ch.pipeline();
+            //-
             NaturalChannel naturalChannel = new NetNaturalChannel(natSharaChannels, bindAddr);
+            //-
             pipeline.addLast(new AcceptUserHandler(naturalChannel));
         }
     }

@@ -8,11 +8,12 @@ import zzy.zyproxy.core.packet.ProxyPacket;
  * @author zhouzhongyuan
  * @date 2016/12/2
  */
-public interface BTPChannel {
-
-    ChannelFuture flushAndClose();
+public interface BTPChannel extends ProxyChannelHandlerContext {
 
     ChannelFuture writeMsgAndFlush(ProxyPacket msg);
+
+    //==
+    void submitTask(Runnable task);
 
     //===
     NaturalChannel getNaturalChannel(Integer userCode);
@@ -20,8 +21,6 @@ public interface BTPChannel {
     NaturalChannel putNaturalChannel(Integer userCode, NaturalChannel naturalChannel);
 
     void removeNaturalChannel(Integer userCode);
-
-    void flushChannelHandlerContext(ChannelHandlerContext ctx);
 
     //===
     ChannelFuture writeAuth(String authCode);
@@ -33,6 +32,8 @@ public interface BTPChannel {
     ChannelFuture writeClose(Integer userCode);
 
     //===
+    void channelActive();
+
     void channelReadAuth(ProxyPacket.Auth auth);
 
     void channelReadConnected(ProxyPacket.Connected connected);
@@ -40,6 +41,4 @@ public interface BTPChannel {
     void channelReadTransmit(ProxyPacket.Transmit transmit);
 
     void channelReadClose(ProxyPacket.Close close);
-
-    void channelActive();
 }

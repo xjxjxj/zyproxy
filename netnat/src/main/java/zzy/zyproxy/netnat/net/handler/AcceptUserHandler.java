@@ -31,6 +31,7 @@ public class AcceptUserHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        LOGGER.debug("handler【1】用户channelActive");
         flushNaturalChannel(ctx).channelActive();
     }
 
@@ -43,24 +44,21 @@ public class AcceptUserHandler extends ChannelInboundHandlerAdapter {
         byte[] bytes = new byte[buf.readableBytes()];
         buf.readBytes(bytes);
 
+        LOGGER.debug("handler【2】用户channelRead");
         flushNaturalChannel(ctx).channelRead(bytes);
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        LOGGER.debug("handler【3】用户channelInactive");
         flushNaturalChannel(ctx).channelInactive();
     }
 
 
     @Override
     public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
+        LOGGER.debug("handler【-1】用户channelWritabilityChanged");
         flushNaturalChannel(ctx).channelWritabilityChanged();
-    }
-
-
-    @Override
-    public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
-        ctx.read();
     }
 
     @Override

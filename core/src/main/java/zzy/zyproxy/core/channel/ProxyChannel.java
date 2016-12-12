@@ -10,7 +10,7 @@ import io.netty.channel.ChannelHandlerContext;
  * @author zhouzhongyuan
  * @date 2016/12/4
  */
-public class ProxyChannel {
+public class ProxyChannel implements ProxyChannelHandlerContext{
     private ChannelHandlerContext ctx;
 
     public ProxyChannel() {
@@ -25,11 +25,15 @@ public class ProxyChannel {
         return ctx;
     }
 
+    public boolean ctxchannelIsActive() {
+        return ctx.channel().isActive();
+    }
+
     public void flushChannelHandlerContext(ChannelHandlerContext ctx) {
         this.ctx = ctx;
     }
 
-    protected ChannelFuture writeAndFlush(Object msg) {
+    public ChannelFuture writeAndFlush(Object msg) {
         return ctx.writeAndFlush(msg);
     }
 
