@@ -1,9 +1,10 @@
 package zzy.zyproxy.netnat;
 
-import zzy.zyproxy.netnat.nat.NatChannelClient;
+import zzy.zyproxy.core.util.task.TaskExecutors;
+import zzy.zyproxy.netnat.nat.NatBTPClient;
 import zzy.zyproxy.netnat.net.AcceptBTPServer;
-import zzy.zyproxy.netnat.net.AcceptUserServer;
-import zzy.zyproxy.netnat.util.NatSharaChannels;
+import zzy.zyproxy.netnat.net.AcceptTcpUserServer;
+import zzy.zyproxy.netnat.net.NetSharaChannels;
 import zzy.zyproxy.netnat.util.ProxyConfig;
 
 import java.net.InetSocketAddress;
@@ -23,13 +24,15 @@ public class App {
 
     public static void main(String[] args) throws InterruptedException {
         App app = new App();
-        final NatSharaChannels natSharaChannels = new NatSharaChannels();
+        final NetSharaChannels netSharaChannels = new NetSharaChannels();
+        final TaskExecutors netTaskExecutors = new TaskExecutors();
+        final TaskExecutors natTaskExecutors = new TaskExecutors();
 
-        app.startAcetpBTPServer(proxyConfig, natSharaChannels);
+        app.startAcetpBTPServer(proxyConfig, netSharaChannels, netTaskExecutors);
 
-        app.startAcetpServer(proxyConfig, natSharaChannels);
+        app.startAcetpServer(proxyConfig, netSharaChannels, netTaskExecutors);
         Thread.sleep(2000);
-        app.startClient(proxyConfig);
+        app.startClient(proxyConfig, natTaskExecutors);
 
         synchronized (App.class) {
             try {
@@ -40,13 +43,13 @@ public class App {
 
     }
 
-    public void startAcetpBTPServer(ProxyConfig proxyConfig, final NatSharaChannels natSharaChannels) {
+    public void startAcetpBTPServer(ProxyConfig proxyConfig, final NetSharaChannels netSharaChannels, final TaskExecutors netTaskExecutors) {
         final InetSocketAddress acceptBTPchannelAddr = proxyConfig.acceptBTPAddr();
         new Thread() {
             @Override
             public void run() {
                 try {
-                    new AcceptBTPServer(acceptBTPchannelAddr, natSharaChannels).start();
+                    new AcceptBTPServer(acceptBTPchannelAddr, netSharaChannels, netTaskExecutors).start();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -54,30 +57,31 @@ public class App {
         }.start();
     }
 
-    public void startAcetpServer(ProxyConfig proxyConfig, final NatSharaChannels natSharaChannels) {
+    public void startAcetpServer(ProxyConfig proxyConfig, final NetSharaChannels netSharaChannels, final TaskExecutors netTaskExecutors) {
         List<ProxyConfig.Proxy> proxies = proxyConfig.proxyList();
         for (final ProxyConfig.Proxy proxy : proxies) {
             new Thread() {
                 @Override
                 public void run() {
-                    AcceptUserServer acceptUserServer
-                            = new AcceptUserServer(proxy.getAcceptUserAddr(), natSharaChannels);
-                    acceptUserServer.start();
+                    AcceptTcpUserServer acceptTcpUserServer
+                        = new AcceptTcpUserServer(proxy.getAcceptUserAddr(), netSharaChannels, netTaskExecutors);
+                    acceptTcpUserServer.start();
                 }
             }.start();
         }
     }
 
-    public void startClient(final ProxyConfig proxyConfig) {
+    public void startClient(final ProxyConfig proxyConfig, final TaskExecutors natTaskExecutors) {
         List<ProxyConfig.Proxy> proxies = proxyConfig.proxyList();
         for (final ProxyConfig.Proxy proxy : proxies) {
             new Thread() {
                 @Override
                 public void run() {
-                    NatChannelClient natBTPClient = new NatChannelClient(
-                            proxyConfig.acceptBTPAddr(),
-                            proxy.getRealAddr(),
-                            proxy.getAuth()
+                    NatBTPClient natBTPClient = new NatBTPClient(
+                        proxyConfig.acceptBTPAddr(),
+                        proxy.getRealAddr(),
+                        proxy.getAuth(),
+                        natTaskExecutors
                     );
                     natBTPClient.start();
                 }

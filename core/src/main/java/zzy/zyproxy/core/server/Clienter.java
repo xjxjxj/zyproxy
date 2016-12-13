@@ -14,11 +14,11 @@ import java.net.InetSocketAddress;
  * @author zhouzhongyuan
  * @date 2016/12/5
  */
-public class ServerClient {
+public class Clienter {
     private final EventLoopGroup group;
     private final ChannelInitializer<SocketChannel> handler;
 
-    public ServerClient(EventLoopGroup group, ChannelInitializer<SocketChannel> handler) {
+    public Clienter(EventLoopGroup group, ChannelInitializer<SocketChannel> handler) {
         this.group = group;
         this.handler = handler;
     }

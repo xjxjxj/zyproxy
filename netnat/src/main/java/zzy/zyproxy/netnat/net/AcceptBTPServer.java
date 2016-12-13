@@ -5,12 +5,13 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import zzy.zyproxy.core.handler.InboundHandlerEvent;
+import zzy.zyproxy.core.packet.ProxyPacket;
 import zzy.zyproxy.core.packet.msgpacket.MsgPackCodec;
 import zzy.zyproxy.core.server.AcceptServer;
-import zzy.zyproxy.netnat.channel.NetNatBTPChannel;
-import zzy.zyproxy.netnat.net.channel.NetBTPChannel;
-import zzy.zyproxy.netnat.net.handler.AcceptBTPHandler;
-import zzy.zyproxy.netnat.util.NatSharaChannels;
+import zzy.zyproxy.core.util.SharaChannels;
+import zzy.zyproxy.core.util.task.TaskExecutors;
+import zzy.zyproxy.netnat.net.tasker.AcceptBTPTasker;
 import zzy.zyproxy.netnat.util.ProxyConfig;
 
 import java.net.InetSocketAddress;
@@ -21,19 +22,24 @@ import java.net.InetSocketAddress;
  */
 public class AcceptBTPServer {
     private final static Logger LOGGER = LoggerFactory.getLogger(ProxyConfig.class);
-    private final NatSharaChannels natSharaChannels;
+    private final SharaChannels sharaChannels;
     private final AcceptServer acceptServer;
+    private final TaskExecutors taskExecutors;
     private InetSocketAddress bindAddr;
 
-    public AcceptBTPServer(InetSocketAddress bindAddr, NatSharaChannels natSharaChannels) {
+    public AcceptBTPServer(InetSocketAddress bindAddr, SharaChannels sharaChannels, TaskExecutors taskExecutors) {
         if (bindAddr == null) {
             throw new NullPointerException("AcceptBTPServer#bindAddr");
         }
-        if (natSharaChannels == null) {
+        if (sharaChannels == null) {
             throw new NullPointerException("AcceptBTPServer#natSharaChannels");
         }
+        if (taskExecutors == null) {
+            throw new NullPointerException("AcceptBTPServer#taskExecutors");
+        }
+        this.taskExecutors = taskExecutors;
         this.bindAddr = bindAddr;
-        this.natSharaChannels = natSharaChannels;
+        this.sharaChannels = sharaChannels;
         this.acceptServer = new AcceptServer(new NioEventLoopGroup(), new NioEventLoopGroup(), new Initializer());
     }
 
@@ -56,10 +62,32 @@ public class AcceptBTPServer {
         protected void initChannel(SocketChannel ch) throws Exception {
             ChannelPipeline pipeline = ch.pipeline();
             MsgPackCodec.addCodec(pipeline);
-            //--
-            NetBTPChannel netBTPChannel = new NetBTPChannel(natSharaChannels);
-            //--
-            pipeline.addLast(new AcceptBTPHandler(netBTPChannel));
+            AcceptBTPTasker acceptBTPTasker = new AcceptBTPTasker(sharaChannels,taskExecutors);
+
+            pipeline.addLast(new AcceptBTPHandler(acceptBTPTasker));
+        }
+    }
+
+    ///===AcceptBTPHandler
+    class AcceptBTPHandler extends SimpleChannelInboundHandler<ProxyPacket> {
+        private final InboundHandlerEvent<ProxyPacket> inboundHandlerEvent;
+
+        public AcceptBTPHandler(InboundHandlerEvent<ProxyPacket> inboundHandlerEvent) {
+            super();
+            if (inboundHandlerEvent == null) {
+                throw new NullPointerException("AcceptBTPHandler#inboundHandlerEvent");
+            }
+            this.inboundHandlerEvent = inboundHandlerEvent;
+        }
+
+        protected void channelRead0(ChannelHandlerContext ctx, ProxyPacket msg) throws Exception {
+            inboundHandlerEvent.channelReadEvent(ctx, msg);
+
+        }
+
+        @Override
+        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+            LOGGER.warn("{}", cause);
         }
     }
 

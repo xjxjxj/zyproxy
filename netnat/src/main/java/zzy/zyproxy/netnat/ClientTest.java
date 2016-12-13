@@ -13,7 +13,7 @@ public class ClientTest {
     public static void main(String[] args) throws InterruptedException {
         ProxyConfig proxyConfig = App.proxyConfig;
         App app = new App();
-        app.startClient(proxyConfig);
+        app.startClient(proxyConfig, natTaskExecutors);
         System.out.println("press ENTER to call System.exit() and run the shutdown routine.");
         try {
             int read = System.in.read();

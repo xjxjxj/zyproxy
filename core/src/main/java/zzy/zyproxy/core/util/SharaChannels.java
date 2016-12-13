@@ -1,13 +1,28 @@
 package zzy.zyproxy.core.util;
 
-import zzy.zyproxy.core.channel.BTPChannel;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * @author zhouzhongyuan
  * @date 2016/12/5
  */
 public interface SharaChannels {
-    void putTcpBtpChannel(String authCode, BTPChannel btpChannel);
+    void putTcpBtp(String authCode, ChannelHandlerContext tcpBtpCtx);
 
-    BTPChannel getTcpBtpChannel(Integer port);
+    ChannelHandlerContext getTcpBtp(Integer port);
+
+    void removeTcpBtp(ChannelHandlerContext tcpBtpCtx);
+
+    ChannelHandlerContext getTcpUser(Integer userCode);
+
+    /**
+     * @param userCode 用户id
+     * @param tcpUserCtx 用户ctx
+     * @param port tcpBtp端口
+     * @return tcpBtp
+     */
+    ChannelHandlerContext putTcpUser(Integer userCode, ChannelHandlerContext tcpUserCtx, Integer port);
+
+    ChannelHandlerContext removeTcpUser(Integer userCode);
+
 }
