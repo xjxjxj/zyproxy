@@ -8,7 +8,7 @@ import io.netty.handler.codec.bytes.ByteArrayEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import zzy.zyproxy.core.server.AcceptServer;
-import zzy.zyproxy.core.util.SharaChannels;
+import zzy.zyproxy.core.util.ShareChannels;
 import zzy.zyproxy.core.util.task.TaskExecutors;
 import zzy.zyproxy.netnat.net.tasker.AcceptTcpUserTasker;
 
@@ -23,21 +23,21 @@ public class AcceptTcpUserServer {
     private final AcceptServer acceptServer;
     private final TaskExecutors taskExecutors;
     private InetSocketAddress bindAddr;
-    private final SharaChannels sharaChannels;
+    private final ShareChannels shareChannels;
 
-    public AcceptTcpUserServer(InetSocketAddress bindAddr, SharaChannels sharaChannels, TaskExecutors taskExecutors) {
+    public AcceptTcpUserServer(InetSocketAddress bindAddr, ShareChannels shareChannels, TaskExecutors taskExecutors) {
         if (bindAddr == null) {
             throw new NullPointerException("AcceptTcpUserServer#bindAddr");
         }
-        if (sharaChannels == null) {
-            throw new NullPointerException("AcceptTcpUserServer#sharaChannels");
+        if (shareChannels == null) {
+            throw new NullPointerException("AcceptTcpUserServer#shareChannels");
         }
         if (taskExecutors == null) {
             throw new NullPointerException("AcceptBTPServer#taskExecutors");
         }
         this.taskExecutors = taskExecutors;
         this.bindAddr = bindAddr;
-        this.sharaChannels = sharaChannels;
+        this.shareChannels = shareChannels;
         this.acceptServer = new AcceptServer(new NioEventLoopGroup(), new NioEventLoopGroup(), new Initializer());
     }
 
@@ -63,7 +63,7 @@ public class AcceptTcpUserServer {
             pipeline.addLast(new ByteArrayDecoder(), new ByteArrayEncoder());
             //-
             AcceptTcpUserTasker tasker
-                = new AcceptTcpUserTasker(sharaChannels, bindAddr,taskExecutors);
+                = new AcceptTcpUserTasker(shareChannels, bindAddr,taskExecutors);
             //-
             pipeline.addLast(new AcceptUserHandler(tasker));
         }

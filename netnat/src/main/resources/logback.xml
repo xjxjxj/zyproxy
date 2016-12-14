@@ -32,6 +32,7 @@
     <logger name="com" level="INFO"/>
 
     <logger name="zzy" level="INFO"/>
+    <!--<logger name="zzy" level="DEBUG"/>-->
 
     <root level="DEBUG">
         <appender-ref ref="CONSOLE"/>

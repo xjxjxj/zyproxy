@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 import zzy.zyproxy.core.packet.ProxyPacket;
 import zzy.zyproxy.core.packet.msgpacket.MsgPackCodec;
 import zzy.zyproxy.core.server.Clienter;
-import zzy.zyproxy.core.util.SharaChannels;
+import zzy.zyproxy.core.util.ShareChannels;
 import zzy.zyproxy.core.util.task.TaskExecutors;
 import zzy.zyproxy.netnat.nat.tasker.ClientBTPTasker;
 
@@ -25,7 +25,7 @@ public class NatBTPClient {
     private final TaskExecutors taskExecutors;
     private final Clienter clienter;
     private final RealClientFactory realClientFactory;
-    private final SharaChannels sharaChannels;
+    private final ShareChannels shareChannels;
 
     public NatBTPClient(InetSocketAddress acceptBTPAddr, InetSocketAddress realAddr, String auth, TaskExecutors taskExecutors) {
         if (acceptBTPAddr == null) {
@@ -45,7 +45,7 @@ public class NatBTPClient {
         this.auth = auth;
         this.taskExecutors = taskExecutors;
         clienter = new Clienter(new NioEventLoopGroup(), new Initializer());
-        this.sharaChannels = new NatSharaChannels();
+        this.shareChannels = new NatShareChannels();
         this.realClientFactory = new RealClientFactory(realAddr);
     }
 
@@ -69,7 +69,7 @@ public class NatBTPClient {
             MsgPackCodec.addCodec(pipeline);
 
             ClientBTPTasker clientBTPTasker
-                = new ClientBTPTasker(sharaChannels, realClientFactory, auth, taskExecutors);
+                = new ClientBTPTasker(shareChannels, realClientFactory, auth, taskExecutors);
 
             pipeline.addLast(new NatBTPHandler(clientBTPTasker));
         }

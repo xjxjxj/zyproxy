@@ -6,7 +6,7 @@ import io.netty.channel.ChannelHandlerContext;
  * @author zhouzhongyuan
  * @date 2016/12/5
  */
-public interface SharaChannels {
+public interface ShareChannels {
     void putTcpBtp(String authCode, ChannelHandlerContext tcpBtpCtx);
 
     ChannelHandlerContext getTcpBtp(Integer port);

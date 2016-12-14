@@ -1,12 +1,14 @@
 package zzy.zyproxy.core.handler;
 
 import io.netty.channel.ChannelHandlerContext;
+import zzy.zyproxy.core.util.task.TaskExecutor;
 
 /**
  * @author zhouzhongyuan
  * @date 2016/12/13
  */
 public interface InboundHandlerEvent<I> {
+    TaskExecutor taskExecutor();
 
     void channelRegisteredEvent(ChannelHandlerContext ctx) throws Exception;
 

@@ -1,9 +1,9 @@
-package zzy.zyproxy.netnat.nat;
+package zzy.zyproxy.netnat.net;
 
 import io.netty.channel.ChannelHandlerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import zzy.zyproxy.core.util.SharaChannels;
+import zzy.zyproxy.core.util.ShareChannels;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -12,20 +12,30 @@ import java.util.Map;
  * @author zhouzhongyuan
  * @date 2016/12/6
  */
-public class NatSharaChannels implements SharaChannels {
-    private final static Logger LOGGER = LoggerFactory.getLogger(NatSharaChannels.class);
+public class NetShareChannels implements ShareChannels {
+    private final static Logger LOGGER = LoggerFactory.getLogger(NetShareChannels.class);
 
-    private  ChannelHandlerContext tcpBtp;
+    private final Map<Integer, ChannelHandlerContext> tcpBtpMap
+        = new HashMap<Integer, ChannelHandlerContext>();
     private final Map<Integer, ChannelHandlerContext> tcpUserMap
         = new HashMap<Integer, ChannelHandlerContext>();
 
 
-    public void putTcpBtp(String authCode, ChannelHandlerContext tcpBtpCtx) {
-        tcpBtp = tcpBtpCtx;
+    public synchronized void putTcpBtp(String authCode, ChannelHandlerContext tcpBtpCtx) {
+        String[] split = authCode.split("-");
+        String port = null;
+        String auth;
+        if (split.length == 2) {
+            port = split[1];
+            auth = split[0];
+        }
+        if (port != null) {
+            tcpBtpMap.put(Integer.parseInt(port), tcpBtpCtx);
+        }
     }
 
     public ChannelHandlerContext getTcpBtp(Integer port) {
-        return tcpBtp;
+        return tcpBtpMap.get(port);
     }
 
     public void removeTcpBtp(ChannelHandlerContext tcpBtpCtx) {

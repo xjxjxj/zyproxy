@@ -8,7 +8,6 @@ import io.netty.handler.codec.bytes.ByteArrayEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import zzy.zyproxy.core.server.Clienter;
-import zzy.zyproxy.core.util.SharaChannels;
 import zzy.zyproxy.netnat.nat.tasker.TcpRealTasker;
 
 import java.net.InetSocketAddress;

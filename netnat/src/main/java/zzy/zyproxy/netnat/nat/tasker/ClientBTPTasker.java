@@ -5,7 +5,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import zzy.zyproxy.core.packet.ProxyPacket;
 import zzy.zyproxy.core.util.ChannelUtil;
-import zzy.zyproxy.core.util.SharaChannels;
+import zzy.zyproxy.core.util.ShareChannels;
+import zzy.zyproxy.core.util.task.Task;
+import zzy.zyproxy.core.util.task.ShareTaskExecutor;
 import zzy.zyproxy.core.util.task.TaskExecutor;
 import zzy.zyproxy.core.util.task.TaskExecutors;
 import zzy.zyproxy.netnat.nat.RealClientFactory;
@@ -23,16 +25,16 @@ public class ClientBTPTasker extends AbstractInboundHandlerEvent<ProxyPacket> {
         return LOGGER;
     }
 
-    private final SharaChannels sharaChannels;
+    private final ShareChannels shareChannels;
     private final RealClientFactory realClientFactory;
     private final String auth;
     private final TaskExecutors taskExecutors;
 
 
-    public ClientBTPTasker(SharaChannels sharaChannels, RealClientFactory realClientFactory, String auth, TaskExecutors taskExecutors) {
+    public ClientBTPTasker(ShareChannels shareChannels, RealClientFactory realClientFactory, String auth, TaskExecutors taskExecutors) {
         super();
-        if (sharaChannels == null) {
-            throw new NullPointerException("ClientBTPTasker#sharaChannels");
+        if (shareChannels == null) {
+            throw new NullPointerException("ClientBTPTasker#shareChannels");
         }
         if (realClientFactory == null) {
             throw new NullPointerException("ClientBTPTasker#realClientFactory");
@@ -44,11 +46,11 @@ public class ClientBTPTasker extends AbstractInboundHandlerEvent<ProxyPacket> {
             throw new NullPointerException("ClientBTPTasker#taskExecutors");
         }
         //---
-        this.sharaChannels = sharaChannels;
+        this.shareChannels = shareChannels;
         this.realClientFactory = realClientFactory;
         this.auth = auth;
         this.taskExecutors = taskExecutors;
-        this.taskExecutor = taskExecutors.createExclusiveSingleThreadExecuter();
+        this.taskExecutor = taskExecutors.createExclusiveSingleThreadExecuter().start();
     }
 
 
@@ -62,18 +64,19 @@ public class ClientBTPTasker extends AbstractInboundHandlerEvent<ProxyPacket> {
 
 
     @Override
-    protected Runnable channelActiveTask(final ChannelHandlerContext ctx) {
-        return new Runnable() {
+    public void channelActiveEvent(final ChannelHandlerContext ctx) {
+        Task task = new Task() {
             public void run() {
-                sharaChannels.putTcpBtp(null, ctx);
+                shareChannels.putTcpBtp(null, ctx);
                 ctx.writeAndFlush(ProxyPacketFactory.newPacketAuth(auth));
             }
         };
+        taskExecutor().addFirst(task);
     }
 
     @Override
-    protected Runnable channelReadTask(final ChannelHandlerContext ctx, final ProxyPacket msg) {
-        return new Runnable() {
+    public void channelReadEvent(final ChannelHandlerContext ctx, final ProxyPacket msg) {
+        Task task = new Task() {
             public void run() {
                 if (msg.isAuth()) {
                     //ProxyPacket.Auth auth = msg.asAuth();
@@ -82,8 +85,8 @@ public class ClientBTPTasker extends AbstractInboundHandlerEvent<ProxyPacket> {
                 }
                 if (msg.isConnected()) {
                     ProxyPacket.Connected connected = msg.asConnected();
-                    final TcpRealTasker tcpRealTasker 
-                        = new TcpRealTasker(ctx, connected.getUserCode(), taskExecutors, sharaChannels);
+                    final TcpRealTasker tcpRealTasker
+                        = new TcpRealTasker(ctx, connected.getUserCode(), taskExecutors, shareChannels);
                     realClientFactory.addTcpRealTaskerQueue(tcpRealTasker);
                     try {
                         realClientFactory.createClient();
@@ -97,11 +100,16 @@ public class ClientBTPTasker extends AbstractInboundHandlerEvent<ProxyPacket> {
                     final Integer userCode = transmit.getUserCode();
                     TaskExecutor realExector
                         = taskExecutors.getTaskExector(userCode);
-                    realExector.submitQueueTask(new Runnable() {
-                        public void run() {
-                            sharaChannels.getTcpUser(userCode).writeAndFlush(transmit.getBody());
-                        }
-                    });
+                    if (realExector != null) {
+                        realExector.addLast(new Task() {
+                            public void run() {
+                                ChannelHandlerContext tcpUser = shareChannels.getTcpUser(userCode);
+                                if (tcpUser != null) {
+                                    tcpUser.writeAndFlush(transmit.getBody());
+                                }
+                            }
+                        });
+                    }
                     return;
                 }
                 if (msg.isClose()) {
@@ -109,17 +117,20 @@ public class ClientBTPTasker extends AbstractInboundHandlerEvent<ProxyPacket> {
                     final Integer userCode = close.getUserCode();
                     TaskExecutor realExector
                         = taskExecutors.getTaskExector(userCode);
-                    realExector.submitQueueTask(new Runnable() {
-                        public void run() {
-                            ChannelHandlerContext userCtx = sharaChannels.removeTcpUser(userCode);
-                            if (userCtx != null) {
-                                ChannelUtil.flushAndClose(userCtx);
+                    if (realExector != null) {
+                        realExector.addLast(new Task() {
+                            public void run() {
+                                ChannelHandlerContext userCtx = shareChannels.removeTcpUser(userCode);
+                                if (userCtx != null) {
+                                    ChannelUtil.flushAndClose(userCtx);
+                                }
                             }
-                        }
-                    });
+                        });
+                    }
                 }
             }
         };
+        taskExecutor().addLast(task);
     }
 
 }

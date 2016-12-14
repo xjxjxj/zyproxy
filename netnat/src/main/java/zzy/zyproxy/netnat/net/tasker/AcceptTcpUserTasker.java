@@ -4,7 +4,9 @@ import io.netty.channel.ChannelHandlerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import zzy.zyproxy.core.packet.ProxyPacket;
-import zzy.zyproxy.core.util.SharaChannels;
+import zzy.zyproxy.core.util.ShareChannels;
+import zzy.zyproxy.core.util.task.Task;
+import zzy.zyproxy.core.util.task.ShareTaskExecutor;
 import zzy.zyproxy.core.util.task.TaskExecutor;
 import zzy.zyproxy.core.util.task.TaskExecutors;
 import zzy.zyproxy.netnat.util.AbstractInboundHandlerEvent;
@@ -18,17 +20,27 @@ import java.net.InetSocketAddress;
  */
 public class AcceptTcpUserTasker extends AbstractInboundHandlerEvent<byte[]> {
     private final static Logger LOGGER = LoggerFactory.getLogger(AcceptTcpUserTasker.class);
-    private SharaChannels sharaChannels;
+    private ShareChannels shareChannels;
     private final InetSocketAddress bindAddr;
     private ChannelHandlerContext btpCtx;
     private final Integer userCode;
 
 
-    public AcceptTcpUserTasker(SharaChannels sharaChannels, InetSocketAddress bindAddr, TaskExecutors taskExecutors) {
-        this.sharaChannels = sharaChannels;
+    public AcceptTcpUserTasker(ShareChannels shareChannels, InetSocketAddress bindAddr, TaskExecutors taskExecutors) {
+        if (shareChannels == null) {
+            throw new NullPointerException("AcceptBTPTasker#shareChannels");
+        }
+        if (bindAddr == null) {
+            throw new NullPointerException("AcceptBTPTasker#bindAddr");
+        }
+        if (taskExecutors == null) {
+            throw new NullPointerException("AcceptBTPTasker#taskExecutors");
+        }
+        ////----
+        this.shareChannels = shareChannels;
         this.bindAddr = bindAddr;
         this.userCode = this.hashCode();
-        taskExecutor = taskExecutors.createSharaSingleThreadExecuter(userCode).start();
+        taskExecutor = taskExecutors.createShareSingleThreadExecuter(userCode).start();
     }
 
     public Logger subLogger() {
@@ -46,33 +58,37 @@ public class AcceptTcpUserTasker extends AbstractInboundHandlerEvent<byte[]> {
     }
 
     @Override
-    protected Runnable channelReadTask(final ChannelHandlerContext ctx, final byte[] msg) {
-        return new Runnable() {
+    public void channelReadEvent(final ChannelHandlerContext ctx, final byte[] msg) {
+        Task task = new Task() {
             public void run() {
                 btpCtxWriteAndFlush(ProxyPacketFactory.newPacketTransmit(userCode, msg));
             }
         };
+        taskExecutor().addLast(task);
     }
 
 
     @Override
-    protected Runnable channelActiveTask(final ChannelHandlerContext ctx) {
-        return new Runnable() {
+    public void channelActiveEvent(final ChannelHandlerContext ctx) {
+        Task task = new Task() {
             public void run() {
-                btpCtx = sharaChannels.putTcpUser(userCode, ctx, bindAddr.getPort());
+                btpCtx = shareChannels.putTcpUser(userCode, ctx, bindAddr.getPort());
+                btpCtxWriteAndFlush(ProxyPacketFactory.newPacketConnected(userCode));
             }
         };
+        taskExecutor().addLast(task);
     }
 
     @Override
-    protected Runnable channelInactiveTask(ChannelHandlerContext ctx) {
-        return new Runnable() {
+    public void channelInactiveEvent(ChannelHandlerContext ctx) {
+        Task task = new Task() {
             public void run() {
-                ChannelHandlerContext tcpUser = sharaChannels.removeTcpUser(userCode);
+                ChannelHandlerContext tcpUser = shareChannels.removeTcpUser(userCode);
                 if (tcpUser != null) {
                     btpCtxWriteAndFlush(ProxyPacketFactory.newPacketClose(userCode));
                 }
             }
         };
+        taskExecutor().addLast(task);
     }
 }

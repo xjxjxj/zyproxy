@@ -6,7 +6,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import zzy.zyproxy.core.packet.ProxyPacket;
 import zzy.zyproxy.core.util.ChannelUtil;
-import zzy.zyproxy.core.util.SharaChannels;
+import zzy.zyproxy.core.util.ShareChannels;
+import zzy.zyproxy.core.util.task.Task;
+import zzy.zyproxy.core.util.task.ShareTaskExecutor;
 import zzy.zyproxy.core.util.task.TaskExecutor;
 import zzy.zyproxy.core.util.task.TaskExecutors;
 import zzy.zyproxy.netnat.util.AbstractInboundHandlerEvent;
@@ -18,13 +20,20 @@ import zzy.zyproxy.netnat.util.AbstractInboundHandlerEvent;
 public class AcceptBTPTasker extends AbstractInboundHandlerEvent<ProxyPacket> {
     private final static Logger LOGGER = LoggerFactory.getLogger(AcceptBTPTasker.class);
     private final TaskExecutors taskExecutors;
-    private SharaChannels sharaChannels;
+    private ShareChannels shareChannels;
 
 
-    public AcceptBTPTasker(SharaChannels sharaChannels, TaskExecutors taskExecutors) {
-        this.sharaChannels = sharaChannels;
+    public AcceptBTPTasker(ShareChannels shareChannels, TaskExecutors taskExecutors) {
+        if (shareChannels == null) {
+            throw new NullPointerException("AcceptBTPTasker#shareChannels");
+        }
+        if (taskExecutors == null) {
+            throw new NullPointerException("AcceptBTPTasker#taskExecutors");
+        }
+        ////----
+        this.shareChannels = shareChannels;
         this.taskExecutors = taskExecutors;
-        taskExecutor = taskExecutors.createExclusiveSingleThreadExecuter();
+        this.taskExecutor = taskExecutors.createExclusiveSingleThreadExecuter().start();
     }
 
     public Logger subLogger() {
@@ -40,12 +49,12 @@ public class AcceptBTPTasker extends AbstractInboundHandlerEvent<ProxyPacket> {
     }
 
     @Override
-    protected Runnable channelReadTask(final ChannelHandlerContext ctx, final ProxyPacket msg) {
-        return new Runnable() {
+    public void channelReadEvent(final ChannelHandlerContext ctx, final ProxyPacket msg) {
+        Task task = new Task() {
             public void run() {
                 if (msg.isAuth()) {
                     ProxyPacket.Auth auth = msg.asAuth();
-                    sharaChannels.putTcpBtp(auth.getAuthCode(), ctx);
+                    shareChannels.putTcpBtp(auth.getAuthCode(), ctx);
                     ctx.writeAndFlush(auth.getAuthCode());
                     return;
                 }
@@ -59,10 +68,12 @@ public class AcceptBTPTasker extends AbstractInboundHandlerEvent<ProxyPacket> {
                     final byte[] body = transmit.getBody();
                     final Integer userCode = transmit.getUserCode();
                     TaskExecutor userTaskExector = taskExecutors.getTaskExector(userCode);
-                    userTaskExector.submitQueueTask(new Runnable() {
+                    userTaskExector.addLast(new Task() {
                         public void run() {
-                            ChannelHandlerContext tcpUser = sharaChannels.getTcpUser(userCode);
-                            tcpUser.writeAndFlush(body == null ? Unpooled.EMPTY_BUFFER : body);
+                            ChannelHandlerContext tcpUser = shareChannels.getTcpUser(userCode);
+                            if (tcpUser != null) {
+                                tcpUser.writeAndFlush(body == null ? Unpooled.EMPTY_BUFFER : body);
+                            }
                         }
                     });
                     return;
@@ -71,9 +82,9 @@ public class AcceptBTPTasker extends AbstractInboundHandlerEvent<ProxyPacket> {
                     ProxyPacket.Close close = msg.asClose();
                     final Integer userCode = close.getUserCode();
                     TaskExecutor userTaskExector = taskExecutors.getTaskExector(userCode);
-                    userTaskExector.submitQueueTask(new Runnable() {
+                    userTaskExector.addLast(new Task() {
                         public void run() {
-                            ChannelHandlerContext userCtx = sharaChannels.removeTcpUser(userCode);
+                            ChannelHandlerContext userCtx = shareChannels.removeTcpUser(userCode);
                             if (userCtx != null) {
                                 ChannelUtil.flushAndClose(userCtx);
                             }
@@ -82,6 +93,7 @@ public class AcceptBTPTasker extends AbstractInboundHandlerEvent<ProxyPacket> {
                 }
             }
         };
+        taskExecutor().addLast(task);
     }
 
 }

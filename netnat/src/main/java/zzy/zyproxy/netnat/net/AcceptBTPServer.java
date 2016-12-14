@@ -9,7 +9,7 @@ import zzy.zyproxy.core.handler.InboundHandlerEvent;
 import zzy.zyproxy.core.packet.ProxyPacket;
 import zzy.zyproxy.core.packet.msgpacket.MsgPackCodec;
 import zzy.zyproxy.core.server.AcceptServer;
-import zzy.zyproxy.core.util.SharaChannels;
+import zzy.zyproxy.core.util.ShareChannels;
 import zzy.zyproxy.core.util.task.TaskExecutors;
 import zzy.zyproxy.netnat.net.tasker.AcceptBTPTasker;
 import zzy.zyproxy.netnat.util.ProxyConfig;
@@ -22,24 +22,24 @@ import java.net.InetSocketAddress;
  */
 public class AcceptBTPServer {
     private final static Logger LOGGER = LoggerFactory.getLogger(ProxyConfig.class);
-    private final SharaChannels sharaChannels;
+    private final ShareChannels shareChannels;
     private final AcceptServer acceptServer;
     private final TaskExecutors taskExecutors;
     private InetSocketAddress bindAddr;
 
-    public AcceptBTPServer(InetSocketAddress bindAddr, SharaChannels sharaChannels, TaskExecutors taskExecutors) {
+    public AcceptBTPServer(InetSocketAddress bindAddr, ShareChannels shareChannels, TaskExecutors taskExecutors) {
         if (bindAddr == null) {
             throw new NullPointerException("AcceptBTPServer#bindAddr");
         }
-        if (sharaChannels == null) {
-            throw new NullPointerException("AcceptBTPServer#natSharaChannels");
+        if (shareChannels == null) {
+            throw new NullPointerException("AcceptBTPServer#natShareChannels");
         }
         if (taskExecutors == null) {
             throw new NullPointerException("AcceptBTPServer#taskExecutors");
         }
         this.taskExecutors = taskExecutors;
         this.bindAddr = bindAddr;
-        this.sharaChannels = sharaChannels;
+        this.shareChannels = shareChannels;
         this.acceptServer = new AcceptServer(new NioEventLoopGroup(), new NioEventLoopGroup(), new Initializer());
     }
 
@@ -62,7 +62,7 @@ public class AcceptBTPServer {
         protected void initChannel(SocketChannel ch) throws Exception {
             ChannelPipeline pipeline = ch.pipeline();
             MsgPackCodec.addCodec(pipeline);
-            AcceptBTPTasker acceptBTPTasker = new AcceptBTPTasker(sharaChannels,taskExecutors);
+            AcceptBTPTasker acceptBTPTasker = new AcceptBTPTasker(shareChannels,taskExecutors);
 
             pipeline.addLast(new AcceptBTPHandler(acceptBTPTasker));
         }
