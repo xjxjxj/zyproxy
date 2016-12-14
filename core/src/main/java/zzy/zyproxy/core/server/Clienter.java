@@ -24,7 +24,7 @@ public class Clienter {
     }
 
     public Bootstrap bootstrap() throws InterruptedException {
-        return new Bootstrap().group(new NioEventLoopGroup())
+        return new Bootstrap().group(group)
             .channel(NioSocketChannel.class)
             .option(ChannelOption.TCP_NODELAY, true)
             .handler(handler);

@@ -85,6 +85,7 @@ public class AcceptBTPTasker extends AbstractInboundHandlerEvent<ProxyPacket> {
                     userTaskExector.addLast(new Task() {
                         public void run() {
                             ChannelHandlerContext userCtx = shareChannels.removeTcpUser(userCode);
+                            LOGGER.info("msg.isClose(), userCode:{}", userCode);
                             if (userCtx != null) {
                                 ChannelUtil.flushAndClose(userCtx);
                             }

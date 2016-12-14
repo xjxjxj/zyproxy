@@ -13,47 +13,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class ShareTaskExecutor implements TaskExecutor {
     private final static Logger LOGGER = LoggerFactory.getLogger(ShareTaskExecutor.class);
-
-    private final static BlockingQueue<ShareTaskExecutor> taskExecutorQueue = new LinkedBlockingQueue<ShareTaskExecutor>();
-
     private static ExecutorService executorService = Executors.newCachedThreadPool();
-
-    static {
-        for (int i = 0; i < 100; i++) {
-            executorService.execute(new Runnable() {
-                @Override
-                public void run() {
-                    taskExecutorRun();
-                }
-            });
-        }
-    }
-
-    @SuppressWarnings("InfiniteRecursion")
-    private static void taskExecutorRun() {
-        try {
-            System.out.println(Thread.currentThread() + "【开始】");
-            ShareTaskExecutor taskExecutor = taskExecutorQueue.take();
-            System.out.println(Thread.currentThread() + "【结束】");
-
-            Runnable tasker = taskExecutor.taskerQeque.pollFirst();
-            if (tasker != null) {
-                tasker.run();
-            }
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } finally {
-            taskExecutorRun();
-        }
-    }
 
     ///==========
     private final int id;
-    private final Deque<Runnable> taskerQeque;
+    private final BlockingDeque<Runnable> taskerQeque;
     private AtomicBoolean started = new AtomicBoolean(false);
     private AtomicBoolean threadRunning = new AtomicBoolean(false);
 
-    protected ShareTaskExecutor(int id, Deque<Runnable> taskerQeque) {
+    protected ShareTaskExecutor(int id, BlockingDeque<Runnable> taskerQeque) {
         this.id = id;
         this.taskerQeque = taskerQeque;
     }
@@ -65,21 +33,36 @@ public class ShareTaskExecutor implements TaskExecutor {
 
     public void addLast(Task task) {
         taskerQeque.addLast(t2r(task));
-        if (started.get() && !threadRunning.get()) {
-            taskExecutorQueue.add(this);
+        if (started.get()) {
+            if (threadRunning.compareAndSet(false, true)) {
+                Runnable runnable = taskerQeque.pollFirst();
+                if (runnable != null) {
+                    executorService.execute(runnable);
+                }
+            }
         }
     }
 
     public void addFirst(Task task) {
         taskerQeque.addFirst(t2r(task));
-        if (started.get() && !threadRunning.get()) {
-            taskExecutorQueue.add(this);
+        if (started.get()) {
+            if (threadRunning.compareAndSet(false, true)) {
+                Runnable runnable = taskerQeque.pollFirst();
+                if (runnable != null) {
+                    executorService.execute(runnable);
+                }
+            }
         }
     }
 
     public ShareTaskExecutor start() {
         if (started.compareAndSet(false, true)) {
-            taskExecutorQueue.add(this);
+            addLast(new Task() {
+                @Override
+                public void run() {
+                    
+                }
+            });
         }
         return this;
     }
@@ -89,7 +72,6 @@ public class ShareTaskExecutor implements TaskExecutor {
             @Override
             public void run() {
                 try {
-                    threadRunning.set(true);
                     task.run();
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -99,7 +81,6 @@ public class ShareTaskExecutor implements TaskExecutor {
                         own.run();
                     } else {
                         threadRunning.set(false);
-                        taskExecutorRun();
                     }
                 }
             }

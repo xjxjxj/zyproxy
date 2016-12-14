@@ -21,7 +21,7 @@ public class ExclusiveTaskExecutor implements TaskExecutor {
     private final ExecutorService executorService;
     private AtomicBoolean started = new AtomicBoolean(false);
     private AtomicBoolean threadRunning = new AtomicBoolean(false);
-
+    
     protected ExclusiveTaskExecutor(int id, Deque<Runnable> taskerQeque) {
         this.id = id;
         this.taskerQeque = taskerQeque;
@@ -35,32 +35,36 @@ public class ExclusiveTaskExecutor implements TaskExecutor {
 
     public void addLast(Task task) {
         taskerQeque.addLast(t2r(task));
-        if (started.get() && !threadRunning.get()) {
-            Runnable runnable = taskerQeque.pollFirst();
-            if (runnable != null) {
-                executorService.execute(runnable);
+        if (started.get()) {
+            if (threadRunning.compareAndSet(false, true)) {
+                Runnable runnable = taskerQeque.pollFirst();
+                if (runnable != null) {
+                    executorService.execute(runnable);
+                }
             }
         }
     }
 
     public void addFirst(Task task) {
         taskerQeque.addFirst(t2r(task));
-        if (started.get() && !threadRunning.get()) {
-            Runnable runnable = taskerQeque.pollFirst();
-            if (runnable != null) {
-                executorService.execute(runnable);
+        if (started.get()) {
+            if (threadRunning.compareAndSet(false, true)) {
+                Runnable runnable = taskerQeque.pollFirst();
+                if (runnable != null) {
+                    executorService.execute(runnable);
+                }
             }
         }
     }
 
     public ExclusiveTaskExecutor start() {
-        if (started.get()) {
-            return this;
-        }
-        started.set(true);
-        Runnable runnable = taskerQeque.pollFirst();
-        if (runnable != null && !threadRunning.get()) {
-            executorService.execute(runnable);
+        if (started.compareAndSet(false, true)) {
+            addLast(new Task() {
+                @Override
+                public void run() {
+
+                }
+            });
         }
         return this;
     }
@@ -70,9 +74,6 @@ public class ExclusiveTaskExecutor implements TaskExecutor {
             @Override
             public void run() {
                 try {
-                    threadRunning.set(true);
-                    LOGGER.debug("t2r run ExclusiveTaskExecutor");
-
                     task.run();
                 } catch (Exception e) {
                     e.printStackTrace();

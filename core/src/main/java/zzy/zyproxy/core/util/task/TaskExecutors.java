@@ -3,6 +3,7 @@ package zzy.zyproxy.core.util.task;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -15,13 +16,13 @@ public class TaskExecutors {
     private final Map<Integer, TaskExecutor> mapQueue = new ConcurrentHashMap<Integer, TaskExecutor>();
 
     public TaskExecutor createExclusiveSingleThreadExecuter() {
-        return new ExclusiveTaskExecutor(idInteger.getAndIncrement(), new LinkedList<Runnable>());
+        return new ExclusiveTaskExecutor(idInteger.getAndIncrement(), new LinkedBlockingDeque<Runnable>());
     }
 
     public TaskExecutor createShareSingleThreadExecuter(int id) {
         TaskExecutor taskExecutor0 = getTaskExector(id);
         if (taskExecutor0 == null) {
-            taskExecutor0 = new ShareTaskExecutor(id, new LinkedList<Runnable>());
+            taskExecutor0 = new ShareTaskExecutor(id, new LinkedBlockingDeque<Runnable>());
             mapQueue.put(id, taskExecutor0);
         }
         return taskExecutor0;

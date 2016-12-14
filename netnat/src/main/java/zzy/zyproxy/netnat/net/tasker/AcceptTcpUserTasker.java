@@ -84,6 +84,7 @@ public class AcceptTcpUserTasker extends AbstractInboundHandlerEvent<byte[]> {
         Task task = new Task() {
             public void run() {
                 ChannelHandlerContext tcpUser = shareChannels.removeTcpUser(userCode);
+                LOGGER.info("channelInactiveEvent, userCode:{}", userCode);
                 if (tcpUser != null) {
                     btpCtxWriteAndFlush(ProxyPacketFactory.newPacketClose(userCode));
                 }

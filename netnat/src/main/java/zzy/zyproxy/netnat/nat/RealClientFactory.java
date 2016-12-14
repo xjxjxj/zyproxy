@@ -11,8 +11,9 @@ import zzy.zyproxy.core.server.Clienter;
 import zzy.zyproxy.netnat.nat.tasker.TcpRealTasker;
 
 import java.net.InetSocketAddress;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author zhouzhongyuan
@@ -22,15 +23,14 @@ public class RealClientFactory {
     private final static Logger LOGGER = LoggerFactory.getLogger(RealClientFactory.class);
     private final InetSocketAddress realAddr;
     private final Clienter clienter;
-    EventLoopGroup group = new NioEventLoopGroup();
-    private final Queue<TcpRealTasker> tcpRealTaskerQueue = new LinkedList<TcpRealTasker>();
+    private final BlockingQueue<TcpRealTasker> tcpRealTaskerQueue = new LinkedBlockingQueue<TcpRealTasker>();
 
     public RealClientFactory(InetSocketAddress realAddr) {
         if (realAddr == null) {
             throw new NullPointerException("RealClientFactory#realAddr");
         }
         this.realAddr = realAddr;
-        this.clienter = new Clienter(group, new Initializer());
+        this.clienter = new Clienter(new NioEventLoopGroup(), new Initializer());
     }
 
 
@@ -41,7 +41,6 @@ public class RealClientFactory {
     public void addTcpRealTaskerQueue(TcpRealTasker tcpRealTasker) {
         tcpRealTaskerQueue.add(tcpRealTasker);
     }
-
     class Initializer extends ChannelInitializer<SocketChannel> {
 
         protected void initChannel(SocketChannel ch) throws Exception {
@@ -49,7 +48,8 @@ public class RealClientFactory {
             pipeline.addLast(new ByteArrayDecoder(), new ByteArrayEncoder());
 
             //--
-            TcpRealTasker tasker = tcpRealTaskerQueue.poll();
+            TcpRealTasker tasker = tcpRealTaskerQueue.poll(1, TimeUnit.SECONDS);
+            
             //--
             pipeline.addLast(new RealHandler(tasker));
         }

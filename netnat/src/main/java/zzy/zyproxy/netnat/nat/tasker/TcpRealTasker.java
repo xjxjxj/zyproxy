@@ -82,9 +82,11 @@ public class TcpRealTasker extends AbstractInboundHandlerEvent<byte[]> {
 
     @Override
     public void channelInactiveEvent(ChannelHandlerContext ctx) {
+        LOGGER.info("channelInactiveEvent, userCode:{}", userCode);
         Task task = new Task() {
             public void run() {
                 ChannelHandlerContext tcpUser = shareChannels.removeTcpUser(userCode);
+                LOGGER.info("task channelInactiveEvent, userCode:{},{}", userCode, tcpUser == null);
                 if (tcpUser != null) {
                     btpCtxWriteAndFlush(ProxyPacketFactory.newPacketClose(userCode));
                 }
