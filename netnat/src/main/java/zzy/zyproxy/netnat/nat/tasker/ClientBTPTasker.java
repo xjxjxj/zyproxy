@@ -86,7 +86,7 @@ public class ClientBTPTasker extends AbstractInboundHandlerEvent<ProxyPacket> {
                 if (msg.isConnected()) {
                     ProxyPacket.Connected connected = msg.asConnected();
                     final TcpRealTasker tcpRealTasker
-                        = new TcpRealTasker(ctx, connected.getUserCode(), taskExecutors, shareChannels);
+                            = new TcpRealTasker(ctx, connected.getUserCode(), taskExecutors, shareChannels);
                     realClientFactory.addTcpRealTaskerQueue(tcpRealTasker);
                     try {
                         realClientFactory.createClient();
@@ -99,7 +99,7 @@ public class ClientBTPTasker extends AbstractInboundHandlerEvent<ProxyPacket> {
                     final ProxyPacket.Transmit transmit = msg.asTransmit();
                     final Integer userCode = transmit.getUserCode();
                     TaskExecutor realExector
-                        = taskExecutors.getTaskExector(userCode);
+                            = taskExecutors.getTaskExector(userCode);
                     if (realExector != null) {
                         realExector.addLast(new Task() {
                             public void run() {
@@ -116,11 +116,12 @@ public class ClientBTPTasker extends AbstractInboundHandlerEvent<ProxyPacket> {
                     ProxyPacket.Close close = msg.asClose();
                     final Integer userCode = close.getUserCode();
                     TaskExecutor realExector
-                        = taskExecutors.getTaskExector(userCode);
+                            = taskExecutors.getTaskExector(userCode);
                     if (realExector != null) {
                         realExector.addLast(new Task() {
                             public void run() {
                                 ChannelHandlerContext userCtx = shareChannels.removeTcpUser(userCode);
+                                LOGGER.info("msg.isClose(), userCode:{},{}", userCode, userCtx == null);
                                 if (userCtx != null) {
                                     ChannelUtil.flushAndClose(userCtx);
                                 }

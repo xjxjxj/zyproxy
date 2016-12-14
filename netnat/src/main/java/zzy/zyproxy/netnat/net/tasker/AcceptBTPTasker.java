@@ -40,8 +40,6 @@ public class AcceptBTPTasker extends AbstractInboundHandlerEvent<ProxyPacket> {
         return LOGGER;
     }
 
-    //自己的业务队列线程
-    //用户的业务队列通过get的方式
     private final TaskExecutor taskExecutor;
 
     public TaskExecutor taskExecutor() {
@@ -85,7 +83,7 @@ public class AcceptBTPTasker extends AbstractInboundHandlerEvent<ProxyPacket> {
                     userTaskExector.addLast(new Task() {
                         public void run() {
                             ChannelHandlerContext userCtx = shareChannels.removeTcpUser(userCode);
-                            LOGGER.info("msg.isClose(), userCode:{}", userCode);
+                            LOGGER.info("msg.isClose(), userCode:{},{}", userCode,userCtx == null);
                             if (userCtx != null) {
                                 ChannelUtil.flushAndClose(userCtx);
                             }
