@@ -7,6 +7,7 @@ import zzy.zyproxy.core.util.ShareChannels;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author zhouzhongyuan
@@ -15,7 +16,7 @@ import java.util.Map;
 public class NatShareChannels implements ShareChannels {
     private final static Logger LOGGER = LoggerFactory.getLogger(NatShareChannels.class);
 
-    private  ChannelHandlerContext tcpBtp;
+    private ChannelHandlerContext tcpBtp;
     private final Map<Integer, ChannelHandlerContext> tcpUserMap
         = new HashMap<Integer, ChannelHandlerContext>();
 
@@ -43,5 +44,11 @@ public class NatShareChannels implements ShareChannels {
 
     public ChannelHandlerContext removeTcpUser(Integer userCode) {
         return tcpUserMap.remove(userCode);
+    }
+
+    @Override
+    public Integer[] getTcpUsers() {
+        Set<Integer> keySet = tcpUserMap.keySet();
+        return keySet.toArray(new Integer[keySet.size()]);
     }
 }

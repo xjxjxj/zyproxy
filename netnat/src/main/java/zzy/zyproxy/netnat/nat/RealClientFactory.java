@@ -1,5 +1,6 @@
 package zzy.zyproxy.netnat.nat;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
@@ -35,27 +36,30 @@ public class RealClientFactory {
 
 
     public synchronized ChannelFuture createClient() throws InterruptedException {
-        return clienter.bootstrap().connect(realAddr);
+        return clienter.bootstrap()
+            .option(ChannelOption.SO_REUSEADDR, true)
+            .option(ChannelOption.SO_LINGER, 0)
+            .connect(realAddr);
     }
 
     public void addTcpRealTaskerQueue(TcpRealTasker tcpRealTasker) {
         tcpRealTaskerQueue.add(tcpRealTasker);
     }
+
     class Initializer extends ChannelInitializer<SocketChannel> {
 
         protected void initChannel(SocketChannel ch) throws Exception {
             ChannelPipeline pipeline = ch.pipeline();
-            pipeline.addLast(new ByteArrayDecoder(), new ByteArrayEncoder());
 
             //--
             TcpRealTasker tasker = tcpRealTaskerQueue.poll(1, TimeUnit.SECONDS);
-            
+
             //--
             pipeline.addLast(new RealHandler(tasker));
         }
     }
 
-    class RealHandler extends SimpleChannelInboundHandler<byte[]> {
+    class RealHandler extends ChannelInboundHandlerAdapter {
         private volatile TcpRealTasker tasker;
 
         public RealHandler(TcpRealTasker tasker) {
@@ -71,6 +75,16 @@ public class RealClientFactory {
             tasker.channelActiveEvent(ctx);
         }
 
+        @Override
+        public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+            if (!(msg instanceof ByteBuf)) {
+                return;
+            }
+            ByteBuf buf = (ByteBuf) msg;
+            byte[] array = new byte[buf.readableBytes()];
+            buf.getBytes(0, array);
+            channelRead0(ctx, array);
+        }
 
         protected void channelRead0(ChannelHandlerContext ctx, byte[] msg) throws Exception {
             tasker.channelReadEvent(ctx, msg);

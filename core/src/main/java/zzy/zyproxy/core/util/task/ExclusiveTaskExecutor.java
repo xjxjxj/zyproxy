@@ -16,20 +16,14 @@ public class ExclusiveTaskExecutor implements TaskExecutor {
     private final static Logger LOGGER = LoggerFactory.getLogger(ShareTaskExecutor.class);
 
     ///==========
-    private final int id;
     private final Deque<Runnable> taskerQeque;
     private final ExecutorService executorService;
     private AtomicBoolean started = new AtomicBoolean(false);
     private AtomicBoolean threadRunning = new AtomicBoolean(false);
-    
-    protected ExclusiveTaskExecutor(int id, Deque<Runnable> taskerQeque) {
-        this.id = id;
+
+    protected ExclusiveTaskExecutor(Deque<Runnable> taskerQeque) {
         this.taskerQeque = taskerQeque;
         executorService = Executors.newSingleThreadExecutor();
-    }
-
-    public int id() {
-        return id;
     }
 
 
@@ -69,12 +63,35 @@ public class ExclusiveTaskExecutor implements TaskExecutor {
         return this;
     }
 
+    @Override
+    public void shutdownNow() {
+        taskerQeque.addFirst(new Runnable() {
+            @Override
+            public void run() {
+                
+            }
+        });
+        executorService.shutdown();
+    }
+
+    @Override
+    public void shutdown() {
+        taskerQeque.addLast(new Runnable() {
+            @Override
+            public void run() {
+
+            }
+        });
+        executorService.shutdown();
+    }
+
     private Runnable t2r(final Task task) {
         return new Runnable() {
             @Override
             public void run() {
                 try {
                     task.run();
+                    System.out.println("task.run();");
                 } catch (Exception e) {
                     e.printStackTrace();
                 } finally {

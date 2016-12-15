@@ -43,4 +43,22 @@ public abstract class ProxyPacketFactory {
         close.setUserCode(userCode);
         return proxyPacket;
     }
+
+    public static ProxyPacket newPacketHeart(Integer[] userCodes) {
+        ProxyPacket proxyPacket = ProxyPacketFactory.newProxyPacket();
+        ProxyPacket.Heart heart = proxyPacket.newHeart();
+        heart.setUserCodes(userCodes);
+        return proxyPacket;
+    }
+
+    public static ProxyPacket newPacketException(Integer userCode, String message) {
+        if (message == null || "".equals(message)) {
+            message = "no message";
+        }
+        ProxyPacket proxyPacket = ProxyPacketFactory.newProxyPacket();
+        ProxyPacket.Exception exception = proxyPacket.newException();
+        exception.setMessage(message);
+        exception.setUserCode(userCode);
+        return proxyPacket;
+    }
 }

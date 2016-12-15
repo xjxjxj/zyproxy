@@ -1,6 +1,7 @@
 package zzy.zyproxy.netnat.util;
 
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.timeout.IdleStateEvent;
 import zzy.zyproxy.core.handler.InboundHandlerEvent;
 import zzy.zyproxy.core.util.SubLogger;
 import zzy.zyproxy.core.util.task.TaskExecutor;
@@ -13,48 +14,48 @@ public abstract class AbstractInboundHandlerEvent<I> implements InboundHandlerEv
 
     public abstract TaskExecutor taskExecutor();
 
-    public final void channelRegisteredEvent(ChannelHandlerContext ctx) {
-        
-    }
-    
+    public void channelRegisteredEvent(ChannelHandlerContext ctx) {
 
-    public final void channelUnregisteredEvent(ChannelHandlerContext ctx) {
-        
+    }
+
+
+    public void channelUnregisteredEvent(ChannelHandlerContext ctx) {
+
     }
 
 
     public void channelActiveEvent(ChannelHandlerContext ctx) {
-        
+
     }
 
 
     public void channelInactiveEvent(ChannelHandlerContext ctx) {
-        
+
     }
 
 
     public void channelReadEvent(ChannelHandlerContext ctx, I msg) {
-        
+
     }
 
 
-    public final void channelReadCompleteEvent(ChannelHandlerContext ctx) {
-        
+    public void channelReadCompleteEvent(ChannelHandlerContext ctx) {
+
     }
 
 
-    public final void userEventTriggeredEvent(ChannelHandlerContext ctx, Object evt) {
-        
+    public void userIdleStateEvent(ChannelHandlerContext ctx, IdleStateEvent evt) {
+
     }
 
 
-    public final void channelWritabilityChangedEvent(ChannelHandlerContext ctx) {
-        
+    public void channelWritabilityChangedEvent(ChannelHandlerContext ctx) {
+
     }
 
 
-    public final void exceptionCaughtEvent(ChannelHandlerContext ctx, Throwable cause) {
-        
+    public void exceptionCaughtEvent(ChannelHandlerContext ctx, Throwable cause) {
+
     }
 
 }

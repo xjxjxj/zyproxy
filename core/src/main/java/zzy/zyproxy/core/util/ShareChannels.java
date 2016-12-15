@@ -25,4 +25,5 @@ public interface ShareChannels {
 
     ChannelHandlerContext removeTcpUser(Integer userCode);
 
+    Integer[] getTcpUsers();
 }

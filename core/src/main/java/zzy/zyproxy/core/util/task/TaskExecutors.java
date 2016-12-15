@@ -1,34 +1,42 @@
 package zzy.zyproxy.core.util.task;
 
-import java.util.LinkedList;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Set;
 import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author zhouzhongyuan
  * @date 2016/12/13
  */
 public class TaskExecutors {
-    private final static AtomicInteger idInteger = new AtomicInteger();
 
-    private final Map<Integer, TaskExecutor> mapQueue = new ConcurrentHashMap<Integer, TaskExecutor>();
+    private final Map<Integer, TaskExecutor> mapQueue = new HashMap<Integer, TaskExecutor>();
 
     public TaskExecutor createExclusiveSingleThreadExecuter() {
-        return new ExclusiveTaskExecutor(idInteger.getAndIncrement(), new LinkedBlockingDeque<Runnable>());
+        return new ExclusiveTaskExecutor(new LinkedBlockingDeque<Runnable>());
     }
 
     public TaskExecutor createShareSingleThreadExecuter(int id) {
-        TaskExecutor taskExecutor0 = getTaskExector(id);
+        TaskExecutor taskExecutor0 = getShareTaskExector(id);
         if (taskExecutor0 == null) {
             taskExecutor0 = new ShareTaskExecutor(id, new LinkedBlockingDeque<Runnable>());
             mapQueue.put(id, taskExecutor0);
+            System.out.println("mapQueue.size()" + mapQueue.size());
         }
         return taskExecutor0;
     }
 
-    public TaskExecutor getTaskExector(int userCode) {
+    public TaskExecutor removeShareExecuter(int userCode) {
+        return mapQueue.remove(userCode);
+    }
+
+    public TaskExecutor getShareTaskExector(int userCode) {
         return mapQueue.get(userCode);
+    }
+
+    public Integer[] getShareTaskExectorUserCodes() {
+        Set<Integer> keySet = mapQueue.keySet();
+        return keySet.toArray(new Integer[keySet.size()]);
     }
 }

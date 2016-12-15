@@ -1,6 +1,7 @@
 package zzy.zyproxy.core.handler;
 
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.timeout.IdleStateEvent;
 import zzy.zyproxy.core.util.task.TaskExecutor;
 
 /**
@@ -22,7 +23,7 @@ public interface InboundHandlerEvent<I> {
 
     void channelReadCompleteEvent(ChannelHandlerContext ctx) throws Exception;
 
-    void userEventTriggeredEvent(ChannelHandlerContext ctx, Object evt) throws Exception;
+    void userIdleStateEvent(ChannelHandlerContext ctx, IdleStateEvent evt) throws Exception;
 
     void channelWritabilityChangedEvent(ChannelHandlerContext ctx) throws Exception;
 

@@ -8,10 +8,10 @@ import zzy.zyproxy.core.packet.ProxyPacket;
 import zzy.zyproxy.core.util.ChannelUtil;
 import zzy.zyproxy.core.util.ShareChannels;
 import zzy.zyproxy.core.util.task.Task;
-import zzy.zyproxy.core.util.task.ShareTaskExecutor;
 import zzy.zyproxy.core.util.task.TaskExecutor;
 import zzy.zyproxy.core.util.task.TaskExecutors;
 import zzy.zyproxy.netnat.util.AbstractInboundHandlerEvent;
+import zzy.zyproxy.netnat.util.ProxyPacketFactory;
 
 /**
  * @author zhouzhongyuan
@@ -65,31 +65,47 @@ public class AcceptBTPTasker extends AbstractInboundHandlerEvent<ProxyPacket> {
                     ProxyPacket.Transmit transmit = msg.asTransmit();
                     final byte[] body = transmit.getBody();
                     final Integer userCode = transmit.getUserCode();
-                    TaskExecutor userTaskExector = taskExecutors.getTaskExector(userCode);
-                    userTaskExector.addLast(new Task() {
-                        public void run() {
-                            ChannelHandlerContext tcpUser = shareChannels.getTcpUser(userCode);
-                            if (tcpUser != null) {
-                                tcpUser.writeAndFlush(body == null ? Unpooled.EMPTY_BUFFER : body);
+                    TaskExecutor userTaskExector = taskExecutors.getShareTaskExector(userCode);
+                    if (userTaskExector != null) {
+                        userTaskExector.addLast(new Task() {
+                            public void run() {
+                                ChannelHandlerContext tcpUser = shareChannels.getTcpUser(userCode);
+                                if (tcpUser != null) {
+                                    tcpUser.writeAndFlush(body == null ? Unpooled.EMPTY_BUFFER : Unpooled.wrappedBuffer(body));
+                                }
                             }
-                        }
-                    });
+                        });
+                    }
                     return;
                 }
                 if (msg.isClose()) {
                     ProxyPacket.Close close = msg.asClose();
                     final Integer userCode = close.getUserCode();
-                    TaskExecutor userTaskExector = taskExecutors.getTaskExector(userCode);
-                    userTaskExector.addLast(new Task() {
-                        public void run() {
-                            ChannelHandlerContext userCtx = shareChannels.removeTcpUser(userCode);
-                            LOGGER.info("msg.isClose(), userCode:{},{}", userCode,userCtx == null);
-                            if (userCtx != null) {
-                                ChannelUtil.flushAndClose(userCtx);
+                    final TaskExecutor userTaskExector = taskExecutors.removeShareExecuter(userCode);
+                    if (userTaskExector != null) {
+                        userTaskExector.addFirst(new Task() {
+                            public void run() {
+                                ChannelHandlerContext userCtx = shareChannels.removeTcpUser(userCode);
+                                if (userCtx != null) {//被动关闭
+                                    ChannelUtil.flushAndClose(userCtx);
+                                }
                             }
-                        }
-                    });
+                        });
+                    }
+                    return;
                 }
+                if (msg.isHeart()) {
+                    ProxyPacket.Heart heart = msg.asHeart();
+                    System.out.println("acept btp{||}" + taskExecutors.getShareTaskExectorUserCodes().length + "{||}" + shareChannels.getTcpUsers().length);
+                    ctx.writeAndFlush(ProxyPacketFactory.newPacketHeart(taskExecutors.getShareTaskExectorUserCodes()));
+                    LOGGER.info("收到一个心跳");
+                    return;
+                }
+                if (msg.isException()) {
+                    ProxyPacket.Exception exception = msg.asException();
+                    //TODO 异常的处理
+                }
+
             }
         };
         taskExecutor().addLast(task);

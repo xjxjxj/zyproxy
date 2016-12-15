@@ -10,4 +10,7 @@ public interface TaskExecutor {
     void addFirst(Task task);
 
     TaskExecutor start();
+
+    void shutdownNow();
+    void shutdown();
 }

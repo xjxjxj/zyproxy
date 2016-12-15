@@ -5,6 +5,36 @@ package zzy.zyproxy.core.packet;
  * @date 2016/12/2
  */
 public interface ProxyPacket {
+    //心跳
+    interface Heart {
+        Integer[] getUserCodes();
+
+        void setUserCodes(Integer[] userCodes);
+    }
+
+    boolean isHeart();
+
+    Heart asHeart();
+
+    Heart newHeart();
+
+    //异常
+    interface Exception {
+        String getMessage();
+
+        void setMessage(String message);
+
+        Integer getUserCode();
+
+        void setUserCode(Integer userCode);
+    }
+
+    boolean isException();
+
+    Exception asException();
+
+    Exception newException();
+
 
     //注册新的channel
     interface Auth {

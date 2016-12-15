@@ -18,8 +18,12 @@ public class MsgPacket implements ProxyPacket, MsgpackPacket {
     private final static int CONNECTED = 0x002a;//用户连接和连接真是服务器
     private final static int TRANSMIT = 0x003a;//用户连接和连接发送信息
     private final static int CLOSE = 0x004a;//用户连接和连接发送信息
+    private final static int HEART = 0x005a;//心跳
+    private final static int EXCEPTION = 0x006a;//异常
     private String authCode;
+    private String exceptionMessage;
     private Integer userCode;
+    private Integer[] userCodes;
     private byte[] msgBody;
 
     private class Action {
@@ -30,8 +34,73 @@ public class MsgPacket implements ProxyPacket, MsgpackPacket {
         }
     }
 
-    public class Auth extends Action implements ProxyPacket.Auth {
+    //===---
+    public class Heart extends Action implements ProxyPacket.Heart {
+        Heart(int msgType) {
+            super(msgType);
+        }
 
+        @Override
+        public Integer[] getUserCodes() {
+            return userCodes;
+        }
+
+        @Override
+        public void setUserCodes(Integer[] userCodes) {
+            MsgPacket.this.userCodes = userCodes;
+        }
+    }
+
+    public boolean isHeart() {
+        return HEART == MSG_TYPE;
+    }
+
+    public Heart asHeart() {
+        return newHeart();
+    }
+
+    public Heart newHeart() {
+        return new Heart(HEART);
+    }
+
+    //===---
+    public class Exception extends Action implements ProxyPacket.Exception {
+        Exception(int msgType) {
+            super(msgType);
+        }
+
+        public String getMessage() {
+            return exceptionMessage;
+        }
+
+        public void setMessage(String message) {
+            exceptionMessage = message;
+        }
+
+        public Integer getUserCode() {
+            return userCode;
+        }
+
+        public void setUserCode(Integer userCode) {
+            MsgPacket.this.userCode = userCode;
+        }
+    }
+
+    public boolean isException() {
+        return EXCEPTION == MSG_TYPE;
+    }
+
+    public Exception asException() {
+        return newException();
+    }
+
+    public Exception newException() {
+        return new Exception(EXCEPTION);
+    }
+
+
+    //===---
+    public class Auth extends Action implements ProxyPacket.Auth {
         Auth(int msgType) {
             super(msgType);
         }
@@ -57,6 +126,8 @@ public class MsgPacket implements ProxyPacket, MsgpackPacket {
         return new Auth(AUTH);
     }
 
+
+    //===---
     class Connected extends Action implements ProxyPacket.Connected {
         Connected(int msgType) {
             super(msgType);
@@ -83,6 +154,8 @@ public class MsgPacket implements ProxyPacket, MsgpackPacket {
         return new Connected(CONNECTED);
     }
 
+
+    //===---
     class Transmit extends Action implements ProxyPacket.Transmit {
         Transmit(int msgType) {
             super(msgType);
@@ -117,6 +190,8 @@ public class MsgPacket implements ProxyPacket, MsgpackPacket {
         return new Transmit(TRANSMIT);
     }
 
+
+    //===---
     class Close extends Action implements ProxyPacket.Close {
         Close(int msgType) {
             super(msgType);

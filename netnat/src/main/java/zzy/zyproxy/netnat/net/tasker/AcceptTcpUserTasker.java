@@ -1,6 +1,7 @@
 package zzy.zyproxy.netnat.net.tasker;
 
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.timeout.IdleStateEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import zzy.zyproxy.core.packet.ProxyPacket;
@@ -20,6 +21,7 @@ import java.net.InetSocketAddress;
  */
 public class AcceptTcpUserTasker extends AbstractInboundHandlerEvent<byte[]> {
     private final static Logger LOGGER = LoggerFactory.getLogger(AcceptTcpUserTasker.class);
+    private final TaskExecutors taskExecutors;
     private ShareChannels shareChannels;
     private final InetSocketAddress bindAddr;
     private ChannelHandlerContext btpCtx;
@@ -40,6 +42,7 @@ public class AcceptTcpUserTasker extends AbstractInboundHandlerEvent<byte[]> {
         this.shareChannels = shareChannels;
         this.bindAddr = bindAddr;
         this.userCode = this.hashCode();
+        this.taskExecutors = taskExecutors;
         taskExecutor = taskExecutors.createShareSingleThreadExecuter(userCode).start();
     }
 
@@ -84,12 +87,20 @@ public class AcceptTcpUserTasker extends AbstractInboundHandlerEvent<byte[]> {
         Task task = new Task() {
             public void run() {
                 ChannelHandlerContext tcpUser = shareChannels.removeTcpUser(userCode);
-                LOGGER.info("channelInactiveEvent, userCode:{},{}", userCode,tcpUser == null);
-                if (tcpUser != null) {
+                taskExecutors.removeShareExecuter(userCode);
+                if (tcpUser != null) {//主动关闭
                     btpCtxWriteAndFlush(ProxyPacketFactory.newPacketClose(userCode));
+                    taskExecutor.shutdown();
+                } else {//被动动关闭
+                    taskExecutor.shutdownNow();
                 }
             }
         };
         taskExecutor().addLast(task);
+    }
+
+    @Override
+    public void channelWritabilityChangedEvent(ChannelHandlerContext ctx) {
+        System.out.println("channelWritabilityChangedEvent");
     }
 }

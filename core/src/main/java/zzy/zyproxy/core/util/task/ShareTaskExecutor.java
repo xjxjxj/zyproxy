@@ -3,7 +3,6 @@ package zzy.zyproxy.core.util.task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -16,6 +15,7 @@ public class ShareTaskExecutor implements TaskExecutor {
     private static ExecutorService executorService = Executors.newCachedThreadPool();
 
     ///==========
+    @SuppressWarnings("unused")
     private final int id;
     private final BlockingDeque<Runnable> taskerQeque;
     private AtomicBoolean started = new AtomicBoolean(false);
@@ -25,11 +25,6 @@ public class ShareTaskExecutor implements TaskExecutor {
         this.id = id;
         this.taskerQeque = taskerQeque;
     }
-
-    public int id() {
-        return id;
-    }
-
 
     public void addLast(Task task) {
         taskerQeque.addLast(t2r(task));
@@ -60,11 +55,31 @@ public class ShareTaskExecutor implements TaskExecutor {
             addLast(new Task() {
                 @Override
                 public void run() {
-                    
+
                 }
             });
         }
         return this;
+    }
+
+    @Override
+    public void shutdownNow() {
+        taskerQeque.addFirst(new Runnable() {
+            @Override
+            public void run() {
+
+            }
+        });
+    }
+
+    @Override
+    public void shutdown() {
+        taskerQeque.addLast(new Runnable() {
+            @Override
+            public void run() {
+
+            }
+        });
     }
 
     private Runnable t2r(final Task task) {

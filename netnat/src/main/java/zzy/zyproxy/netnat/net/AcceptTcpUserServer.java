@@ -1,5 +1,6 @@
 package zzy.zyproxy.netnat.net;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
@@ -60,16 +61,15 @@ public class AcceptTcpUserServer {
         @Override
         protected void initChannel(SocketChannel ch) throws Exception {
             ChannelPipeline pipeline = ch.pipeline();
-            pipeline.addLast(new ByteArrayDecoder(), new ByteArrayEncoder());
             //-
             AcceptTcpUserTasker tasker
-                = new AcceptTcpUserTasker(shareChannels, bindAddr,taskExecutors);
+                = new AcceptTcpUserTasker(shareChannels, bindAddr, taskExecutors);
             //-
             pipeline.addLast(new AcceptUserHandler(tasker));
         }
     }
 
-    class AcceptUserHandler extends SimpleChannelInboundHandler<byte[]> {
+    class AcceptUserHandler extends ChannelInboundHandlerAdapter {
         private final AcceptTcpUserTasker tasker;
 
         public AcceptUserHandler(AcceptTcpUserTasker tasker) {
@@ -86,6 +86,16 @@ public class AcceptTcpUserServer {
             tasker.channelActiveEvent(ctx);
         }
 
+        @Override
+        public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+            if (!(msg instanceof ByteBuf)) {
+                return;
+            }
+            ByteBuf buf = (ByteBuf) msg;
+            byte[] array = new byte[buf.readableBytes()];
+            buf.getBytes(0, array);
+            channelRead0(ctx, array);
+        }
 
         protected void channelRead0(ChannelHandlerContext ctx, byte[] msg) throws Exception {
             tasker.channelReadEvent(ctx, msg);

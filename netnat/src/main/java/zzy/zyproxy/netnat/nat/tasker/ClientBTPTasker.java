@@ -1,18 +1,23 @@
 package zzy.zyproxy.netnat.nat.tasker;
 
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.timeout.IdleState;
+import io.netty.handler.timeout.IdleStateEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import zzy.zyproxy.core.packet.ProxyPacket;
 import zzy.zyproxy.core.util.ChannelUtil;
 import zzy.zyproxy.core.util.ShareChannels;
 import zzy.zyproxy.core.util.task.Task;
-import zzy.zyproxy.core.util.task.ShareTaskExecutor;
 import zzy.zyproxy.core.util.task.TaskExecutor;
 import zzy.zyproxy.core.util.task.TaskExecutors;
 import zzy.zyproxy.netnat.nat.RealClientFactory;
 import zzy.zyproxy.netnat.util.AbstractInboundHandlerEvent;
 import zzy.zyproxy.netnat.util.ProxyPacketFactory;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author zhouzhongyuan
@@ -29,6 +34,8 @@ public class ClientBTPTasker extends AbstractInboundHandlerEvent<ProxyPacket> {
     private final RealClientFactory realClientFactory;
     private final String auth;
     private final TaskExecutors taskExecutors;
+
+    private final Map<Integer, TcpRealTasker> tcpRealTaskerMap = new HashMap<Integer, TcpRealTasker>();
 
 
     public ClientBTPTasker(ShareChannels shareChannels, RealClientFactory realClientFactory, String auth, TaskExecutors taskExecutors) {
@@ -85,13 +92,18 @@ public class ClientBTPTasker extends AbstractInboundHandlerEvent<ProxyPacket> {
                 }
                 if (msg.isConnected()) {
                     ProxyPacket.Connected connected = msg.asConnected();
+                    Integer userCode = connected.getUserCode();
                     final TcpRealTasker tcpRealTasker
-                            = new TcpRealTasker(ctx, connected.getUserCode(), taskExecutors, shareChannels);
+                        = new TcpRealTasker(ctx
+                        , userCode
+                        , taskExecutors.createShareSingleThreadExecuter(userCode));
+
+                    tcpRealTaskerMap.put(userCode, tcpRealTasker);
                     realClientFactory.addTcpRealTaskerQueue(tcpRealTasker);
                     try {
                         realClientFactory.createClient();
                     } catch (InterruptedException e) {
-                        e.printStackTrace();
+                        ctx.writeAndFlush(ProxyPacketFactory.newPacketException(userCode, e.getMessage()));
                     }
                     return;
                 }
@@ -99,13 +111,14 @@ public class ClientBTPTasker extends AbstractInboundHandlerEvent<ProxyPacket> {
                     final ProxyPacket.Transmit transmit = msg.asTransmit();
                     final Integer userCode = transmit.getUserCode();
                     TaskExecutor realExector
-                            = taskExecutors.getTaskExector(userCode);
+                        = taskExecutors.getShareTaskExector(userCode);
                     if (realExector != null) {
                         realExector.addLast(new Task() {
                             public void run() {
                                 ChannelHandlerContext tcpUser = shareChannels.getTcpUser(userCode);
                                 if (tcpUser != null) {
-                                    tcpUser.writeAndFlush(transmit.getBody());
+                                    byte[] body = transmit.getBody();
+                                    tcpUser.writeAndFlush(body == null ? Unpooled.EMPTY_BUFFER : Unpooled.wrappedBuffer(body));
                                 }
                             }
                         });
@@ -116,12 +129,11 @@ public class ClientBTPTasker extends AbstractInboundHandlerEvent<ProxyPacket> {
                     ProxyPacket.Close close = msg.asClose();
                     final Integer userCode = close.getUserCode();
                     TaskExecutor realExector
-                            = taskExecutors.getTaskExector(userCode);
+                        = taskExecutors.getShareTaskExector(userCode);
                     if (realExector != null) {
                         realExector.addLast(new Task() {
                             public void run() {
                                 ChannelHandlerContext userCtx = shareChannels.removeTcpUser(userCode);
-                                LOGGER.info("msg.isClose(), userCode:{},{}", userCode, userCtx == null);
                                 if (userCtx != null) {
                                     ChannelUtil.flushAndClose(userCtx);
                                 }
@@ -129,9 +141,25 @@ public class ClientBTPTasker extends AbstractInboundHandlerEvent<ProxyPacket> {
                         });
                     }
                 }
+                if (msg.isHeart()) {
+                    //ProxyPacket.Heart heart = msg.asHeart();
+                    //do noting
+                    return;
+                }
+                if (msg.isException()) {
+                    ProxyPacket.Exception exception = msg.asException();
+                    //TODO 异常的处理
+                }
             }
         };
         taskExecutor().addLast(task);
     }
 
+    @Override
+    public void userIdleStateEvent(ChannelHandlerContext ctx, IdleStateEvent evt) {
+        if (IdleState.ALL_IDLE.equals(evt.state())) {
+            System.out.println(taskExecutors.getShareTaskExectorUserCodes().length + "{||}" + shareChannels.getTcpUsers().length);
+            ctx.writeAndFlush(ProxyPacketFactory.newPacketHeart(taskExecutors.getShareTaskExectorUserCodes()));
+        }
+    }
 }

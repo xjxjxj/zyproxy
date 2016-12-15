@@ -7,6 +7,7 @@ import zzy.zyproxy.core.util.ShareChannels;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author zhouzhongyuan
@@ -53,5 +54,11 @@ public class NetShareChannels implements ShareChannels {
 
     public ChannelHandlerContext removeTcpUser(Integer userCode) {
         return tcpUserMap.remove(userCode);
+    }
+
+    @Override
+    public Integer[] getTcpUsers() {
+        Set<Integer> keySet = tcpUserMap.keySet();
+        return keySet.toArray(new Integer[keySet.size()]);
     }
 }

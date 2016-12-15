@@ -3,6 +3,9 @@ package zzy.zyproxy.netnat.nat;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
+import io.netty.handler.timeout.IdleState;
+import io.netty.handler.timeout.IdleStateEvent;
+import io.netty.handler.timeout.IdleStateHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import zzy.zyproxy.core.packet.ProxyPacket;
@@ -11,8 +14,10 @@ import zzy.zyproxy.core.server.Clienter;
 import zzy.zyproxy.core.util.ShareChannels;
 import zzy.zyproxy.core.util.task.TaskExecutors;
 import zzy.zyproxy.netnat.nat.tasker.ClientBTPTasker;
+import zzy.zyproxy.netnat.util.ProxyPacketFactory;
 
 import java.net.InetSocketAddress;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author zhouzhongyuan
@@ -71,6 +76,8 @@ public class NatBTPClient {
             ClientBTPTasker clientBTPTasker
                 = new ClientBTPTasker(shareChannels, realClientFactory, auth, taskExecutors);
 
+            pipeline.addLast(new IdleStateHandler(0,
+                0, 10, TimeUnit.SECONDS));
             pipeline.addLast(new NatBTPHandler(clientBTPTasker));
         }
     }
@@ -95,6 +102,17 @@ public class NatBTPClient {
 
         protected void channelRead0(ChannelHandlerContext ctx, ProxyPacket msg) throws Exception {
             tasker.channelReadEvent(ctx, msg);
+        }
+
+        @Override
+        public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+            if (evt instanceof IdleStateEvent) {  // 2
+                IdleStateEvent event = (IdleStateEvent) evt;
+                tasker.userIdleStateEvent(ctx, event);
+            } else {
+                super.userEventTriggered(ctx, evt);
+            }
+
         }
 
         @Override

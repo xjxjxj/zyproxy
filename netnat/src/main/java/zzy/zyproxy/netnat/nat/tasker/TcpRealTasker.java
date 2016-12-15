@@ -4,11 +4,8 @@ import io.netty.channel.ChannelHandlerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import zzy.zyproxy.core.packet.ProxyPacket;
-import zzy.zyproxy.core.util.ShareChannels;
 import zzy.zyproxy.core.util.task.Task;
-import zzy.zyproxy.core.util.task.ShareTaskExecutor;
 import zzy.zyproxy.core.util.task.TaskExecutor;
-import zzy.zyproxy.core.util.task.TaskExecutors;
 import zzy.zyproxy.netnat.util.AbstractInboundHandlerEvent;
 import zzy.zyproxy.netnat.util.ProxyPacketFactory;
 
@@ -18,12 +15,11 @@ import zzy.zyproxy.netnat.util.ProxyPacketFactory;
  */
 public class TcpRealTasker extends AbstractInboundHandlerEvent<byte[]> {
     private final static Logger LOGGER = LoggerFactory.getLogger(TcpRealTasker.class);
-    private final ShareChannels shareChannels;
     private ChannelHandlerContext btpCtx;
     private final Integer userCode;
 
 
-    public TcpRealTasker(ChannelHandlerContext btpCtx, Integer userCode, TaskExecutors taskExecutors, ShareChannels shareChannels) {
+    public TcpRealTasker(ChannelHandlerContext btpCtx, Integer userCode, TaskExecutor shareSingleThreadExecuter) {
         super();
         if (btpCtx == null) {
             throw new NullPointerException("ClientBTPTasker#btpCtx");
@@ -31,17 +27,13 @@ public class TcpRealTasker extends AbstractInboundHandlerEvent<byte[]> {
         if (userCode == null) {
             throw new NullPointerException("ClientBTPTasker#userCode");
         }
-        if (taskExecutors == null) {
-            throw new NullPointerException("ClientBTPTasker#taskExecutors");
-        }
-        if (shareChannels == null) {
-            throw new NullPointerException("ClientBTPTasker#shareChannels");
+        if (shareSingleThreadExecuter == null) {
+            throw new NullPointerException("ClientBTPTasker#shareSingleThreadExecuter");
         }
         ///===
         this.userCode = userCode;
         this.btpCtx = btpCtx;
-        this.shareChannels = shareChannels;
-        taskExecutor = taskExecutors.createShareSingleThreadExecuter(userCode);
+        taskExecutor = shareSingleThreadExecuter;
     }
 
     public Logger subLogger() {
@@ -73,7 +65,7 @@ public class TcpRealTasker extends AbstractInboundHandlerEvent<byte[]> {
     public void channelActiveEvent(final ChannelHandlerContext ctx) {
         Task task = new Task() {
             public void run() {
-                shareChannels.putTcpUser(userCode, ctx, null);
+                
             }
         };
         taskExecutor().addFirst(task);
@@ -85,9 +77,12 @@ public class TcpRealTasker extends AbstractInboundHandlerEvent<byte[]> {
         Task task = new Task() {
             public void run() {
                 ChannelHandlerContext tcpUser = shareChannels.removeTcpUser(userCode);
-                LOGGER.info("task channelInactiveEvent, userCode:{},{}", userCode, tcpUser == null);
-                if (tcpUser != null) {
+                taskExecutors.removeShareExecuter(userCode);
+                if (tcpUser != null) {//主动关闭
                     btpCtxWriteAndFlush(ProxyPacketFactory.newPacketClose(userCode));
+                    taskExecutor.shutdown();
+                } else {//被动动关闭
+                    taskExecutor.shutdownNow();
                 }
             }
         };
