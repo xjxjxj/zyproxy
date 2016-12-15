@@ -2,3 +2,6 @@
 *.ipr
 *.iws
 .idea/
+/target
+/core/target
+/netnat/target
